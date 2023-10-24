@@ -1,0 +1,81 @@
+name: Run tests and build the Python distribution
+
+on:
+  push:
+    branches:
+      - master
+
+  # --------------------------------------------------------------------------------------------------------------------
+
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+
+      python-versions:
+        required: true
+        type: string
+        default: "cp38-cp38"
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+defaults:
+  run:
+    shell: bash
+    working-directory: .
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+concurrency:
+  group: 'random-events-building-and-deployment'
+  cancel-in-progress: true
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+jobs:
+  test-and-build:
+    name: Build and Test the Python distribution
+    runs-on: ubuntu-22.04
+
+    steps:
+
+      - name: Checkout 🛎
+        uses: actions/checkout@v3
+
+      # ----------------------------------------------------------------------------------------------------------------
+
+      - name: Setup python 🐍
+        uses: actions/setup-python@v4
+        with:
+            python-version: 3.8
+            cache: pip
+            
+      # ----------------------------------------------------------------------------------------------------------------
+
+      - name: Install user dependencies 🍼
+        uses: py-actions/py-dependency-install@v4
+        with:
+          path: "requirements.txt"
+
+      # ----------------------------------------------------------------------------------------------------------------
+
+      - name: Run Tests 🎓
+        run: |
+          cd test
+          PYTHONPATH=../src python -m unittest discover
+
+      # ----------------------------------------------------------------------------------------------------------------
+
+      - name: Install Sphinx dependencies 📚
+        uses: py-actions/py-dependency-install@v4
+        with:
+          path: "doc/requirements.txt"
+
+      # ----------------------------------------------------------------------------------------------------------------
+
+      - name: Build Sphinx documentation 📝
+        working-directory: ./doc
+        run: |
+          sudo apt install pandoc
+          make html
