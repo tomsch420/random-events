@@ -44,8 +44,7 @@ class Continuous(Variable):
     Class for real valued random variables.
     """
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     domain: portion.Interval = portion.open(-portion.inf, portion.inf)
 
