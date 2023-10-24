@@ -1,2 +1,2 @@
-portion==2.4.1
-pydantic==2.4.2
+portion>=2.4.1
+pydantic>=2.4.2

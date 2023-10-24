@@ -1,6 +1,7 @@
-from setuptools import setup
-import os
 import codecs
+import os
+
+from setuptools import setup
 
 long_description = """Probabilistic Machine Learning frequently requires descriptions of random variables and events
 that are shared among many packages.This package provides a common interface for describing random variables and events,
@@ -22,13 +23,8 @@ def get_version(rel_path):
         raise RuntimeError("Unable to find version string.")
 
 
-def requirements():
-    with open('requirements.txt', 'r') as f:
-        return [_.strip() for _ in f.readlines() if _.strip()]
-
-
 setup(name='random_events',
-      version=get_version(os.path.join("src", "random_events",  "__init__.py")),
+      version=get_version(os.path.join("src", "random_events", "__init__.py")),
       description='Define random events for probabilistic reasoning',
       long_description=long_description,
       long_description_content_type='text/plain',
@@ -36,9 +32,9 @@ setup(name='random_events',
       author_email='tom_sch@uni-bremen.de',
       url='https://github.com/tomsch420/random-events',
       packages=['random_events'],
-      install_requires=['setuptools'] + requirements(),
+      install_requires=["setuptools", "portion", "pydantic"],
       keywords='random events probabilistic machine learning probability theory variables',
       project_urls={'Source': 'https://github.com/tomsch420/random-events',
                     'Documentation': 'TODO'},
       python_requires='>=3.6',
-      package_dir={'': 'src'},)
+      package_dir={'': 'src'}, )
