@@ -1,0 +1,13 @@
+Welcome to Random Events' documentation!
+=========================================
+
+Probabilistic Machine Learning frequently requires descriptions of random variables and events
+that are shared among many packages.
+This package provides a common interface for describing random variables and events, using
+usable and easily extensible classes.
+
+Install the package via
+
+.. code-block:: bash
+
+    pip install random-events
