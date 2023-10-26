@@ -45,6 +45,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
     'autoapi.extension',
+    'nbsphinx',
+    'sphinx_gallery.load_style',
 ]
 
 # ----------- autoapi setup -------------

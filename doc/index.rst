@@ -90,6 +90,10 @@ indices, while for continuous variables, the values are not changed.
 Examples
 ========
 
+.. nbgallery::
+   notebooks/example
+   notebooks/independent_constraints
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

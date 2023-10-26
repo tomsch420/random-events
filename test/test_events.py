@@ -139,6 +139,51 @@ class EventTestCase(unittest.TestCase):
         self.assertEqual(result["real"], self.event["real"])
         self.assertTrue(result.is_empty())
 
+    def test_intersection_alias(self):
+        event_1 = Event()
+        event_1[self.integer] = (1, 2)
+        event_1[self.symbol] = ("a", "b")
+        self.assertEqual(event_1 & self.event, event_1.intersection(self.event))
+        self.assertEqual(event_1 & self.event, self.event & event_1)
+
+    def test_union(self):
+        event_1 = Event()
+        event_1[self.integer] = (1, 2, 5)
+        event_1[self.symbol] = ("a", "b")
+
+        result = self.event.union(event_1)
+        self.assertEqual(result["integer"], (1, 2, 5))
+        self.assertEqual(result["symbol"], ("a", "b"))
+        self.assertEqual(result["real"], self.event["real"])
+
+    def test_union_alias(self):
+        event_1 = Event()
+        event_1[self.integer] = (1, 2, 5)
+        event_1[self.symbol] = ("a", "b")
+        self.assertEqual(event_1 | self.event, event_1.union(self.event))
+        self.assertEqual(event_1 | self.event, self.event | event_1)
+
+    def test_difference(self):
+        event_1 = Event()
+        event_1[self.integer] = (1, 2, 5)
+        event_1[self.symbol] = ("a", "b")
+        result = event_1.difference(self.event)
+        self.assertEqual(result["integer"], (2, 5))
+        self.assertEqual(result["symbol"], ("b", ))
+        self.assertEqual(result["real"], portion.open(-portion.inf, portion.inf) - self.event["real"])
+
+    def test_difference_alias(self):
+        event_1 = Event()
+        event_1[self.integer] = (1, 2, 5)
+        event_1[self.symbol] = ("a", "b")
+        self.assertEqual(event_1 - self.event, event_1.difference(self.event))
+        # differences are not symmetric
+        self.assertNotEqual(event_1 - self.event, self.event - event_1)
+
+    def test_equality(self):
+        self.assertEqual(self.event, self.event)
+        self.assertNotEqual(self.event, Event())
+
 
 if __name__ == '__main__':
     unittest.main()

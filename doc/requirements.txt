@@ -1,2 +1,4 @@
 sphinx_rtd_theme
 sphinx-autoapi
+nbsphinx
+sphinx_gallery

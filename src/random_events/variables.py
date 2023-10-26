@@ -15,7 +15,7 @@ class Variable(pydantic.BaseModel):
     The name of the variable. The name is used for comparison and hashing.
     """
 
-    domain: Any
+    domain: Any = pydantic.Field(repr=False)
     """
     The set of possible events of the variable.
     """
@@ -46,7 +46,7 @@ class Continuous(Variable):
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    domain: portion.Interval = portion.open(-portion.inf, portion.inf)
+    domain: portion.Interval = pydantic.Field(portion.open(-portion.inf, portion.inf), repr=False)
 
     def __init__(self, name: str, domain: portion.Interval = portion.open(-portion.inf, portion.inf)):
         super().__init__(name=name, domain=domain)
@@ -74,7 +74,7 @@ class Discrete(Variable):
     """
     Class for discrete countable random variables.
     """
-    domain: tuple
+    domain: tuple = pydantic.Field(repr=False)
 
     def __init__(self, name: str, domain: Iterable):
         super().__init__(name=name, domain=tuple(sorted(set(domain))))
