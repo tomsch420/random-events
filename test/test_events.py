@@ -185,5 +185,56 @@ class EventTestCase(unittest.TestCase):
         self.assertNotEqual(self.event, Event())
 
 
+class EncodedEventTestCase(unittest.TestCase):
+
+    integer: Integer
+    symbol: Symbolic
+    real: Continuous
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Create some event for testing.
+        """
+        cls.integer = Integer("integer", set(range(10)))
+        cls.symbol = Symbolic("symbol", {"a", "b", "c"})
+        cls.real = Continuous("real")
+
+    def test_creation(self):
+        event = EncodedEvent()
+        event[self.integer] = 1
+        self.assertEqual(event[self.integer], (1,))
+        event[self.integer] = (1, 2)
+        self.assertEqual(event[self.integer], (1, 2))
+        event[self.symbol] = 0
+        self.assertEqual(event[self.symbol], (0, ))
+        event[self.symbol] = {1, 0}
+        self.assertEqual(event[self.symbol], (0, 1))
+
+        interval = portion.open(0, 1)
+        event[self.real] = interval
+        self.assertEqual(interval, event[self.real])
+
+    def test_raises(self):
+        event = EncodedEvent()
+        with self.assertRaises(ValueError):
+            event[self.symbol] = 3
+
+        with self.assertRaises(ValueError):
+            event[self.symbol] = portion.open(0, 1)
+
+        with self.assertRaises(ValueError):
+            event[self.symbol] = (1, 2, 3, 4)
+
+    def test_dict_like_creation(self):
+        event = EncodedEvent(zip([self.integer, self.symbol], [1, 0]))
+        self.assertEqual(event[self.integer], (1,))
+        self.assertEqual(event[self.symbol], (0,))
+
+        event = EncodedEvent(zip([self.integer, self.symbol], [[0, 1], 0]))
+        self.assertEqual(event[self.integer], (0, 1))
+        self.assertEqual(event[self.symbol], (0,))
+
+
 if __name__ == '__main__':
     unittest.main()

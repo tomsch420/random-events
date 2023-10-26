@@ -319,44 +319,26 @@ class EncodedEvent(Event):
     @staticmethod
     def check_element(variable: Variable, element: Any) -> Union[tuple, portion.Interval]:
 
-        if isinstance(element, Iterable) and not isinstance(element, (str, portion.Interval)):
-            element = tuple(element)
-
-        # if the element is already wrapped
-        if isinstance(element, (tuple, portion.Interval)):
-
-            # check that the element is in the variable's domain
-            if isinstance(variable, Discrete):
-                if not all(0 <= elem < len(variable.domain) for elem in element):
-                    # raise an error
-                    raise ValueError(f"Element {element} not in domain {variable.domain}")
-
-                element = tuple(sorted(element))
-            # return the element directly
+        # if the variable is continuous, don't process the element
+        if isinstance(variable, Continuous):
             return element
 
-        # if the variable is continuous
-        if isinstance(variable, Continuous):
+        # if its any kind of iterable that's not an interval convert it to a tuple
+        if isinstance(element, Iterable) and not isinstance(element, portion.Interval):
+            element = tuple(sorted(element))
 
-            if element not in variable.domain:
-                # raise an error
-                raise ValueError(f"Element {element} not in domain {variable.domain}")
+        # if it is just an int, convert it to a tuple containing the int
+        elif isinstance(element, int):
+            element = (element, )
 
-            # return the element as a singleton interval
-            return portion.singleton(element)
+        if not isinstance(element, tuple):
+            raise ValueError("Element for a discrete domain must be a tuple, not {}".format(type(element)))
 
-        # if the variable is discrete
-        elif isinstance(variable, Discrete):
+        # if any element is not in the index set of the domain, raise an error
+        if not all(0 <= elem < len(variable.domain) for elem in element):
+            raise ValueError(f"Element {element} not in the index set of the domain {variable.domain}")
 
-            # if the element is not in the variables' domain
-            if 0 <= element < len(variable.domain):
-                # raise an error
-                raise ValueError(f"Element {element} not in domain {variable.domain}")
-
-            # return the element as a set
-            return (element,)
-        else:
-            raise TypeError(f"Unknown variable type {type(variable)}")
+        return element
 
     def decode(self) -> Event:
         """
