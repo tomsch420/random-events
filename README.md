@@ -10,3 +10,5 @@ Install the package via
 ```
 pip install random-events
 ```
+
+Read the docs [here.](https://random-events.readthedocs.io/en/latest/)
