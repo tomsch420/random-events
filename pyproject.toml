@@ -17,7 +17,7 @@ classifiers = [
 ]
 keywords=["random events", "probabilistic machine learning", "probability theory", "variables",
     "reasoning under uncertainty"]
-dynamic = ["version"]
+dynamic = ["version", "dependencies"]
 
 [project.urls]
 "Source" = 'https://github.com/tomsch420/random-events'
