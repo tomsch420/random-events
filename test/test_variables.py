@@ -85,6 +85,7 @@ class VariablesTestCase(unittest.TestCase):
         """
         self.assertEqual(self.integer.encode(1), 1)
         self.assertEqual(self.symbol.encode("b"), 1)
+        self.assertEqual(self.real.encode(1.0), 1.0)
 
     def test_decode(self):
         """
@@ -92,6 +93,7 @@ class VariablesTestCase(unittest.TestCase):
         """
         self.assertEqual(self.integer.decode(1), 1)
         self.assertEqual(self.symbol.decode(1), "b")
+        self.assertEqual(self.real.decode(1.0), 1.0)
 
 
 if __name__ == '__main__':

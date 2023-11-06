@@ -38,6 +38,42 @@ class Variable(pydantic.BaseModel):
     def __hash__(self) -> int:
         return self.name.__hash__()
 
+    def encode(self, value: Any) -> Any:
+        """
+        Encode an element of the domain to a representation that is usable for computations.
+
+        :param value: The element to encode
+        :return: The encoded element
+        """
+        return value
+
+    def decode(self, value: Any) -> Any:
+        """
+        Decode an element to the domain from a representation that is usable for computations.
+
+        :param value: The element to decode
+        :return: The decoded element
+        """
+        return value
+
+    def encode_many(self, elements: Iterable) -> Iterable[Any]:
+        """
+        Encode many elements of the domain to representations that are usable for computations.
+
+        :param elements: The elements to encode
+        :return: The encoded elements
+        """
+        return tuple(map(self.encode, elements))
+
+    def decode_many(self, indices: Iterable[int]) -> Iterable[Any]:
+        """
+        Decode many elements from the representations that are usable for computations to their domains.
+
+        :param indices: The encoded elements
+        :return: The decoded elements
+        """
+        return tuple(map(self.decode, indices))
+
 
 class Continuous(Variable):
     """
@@ -88,15 +124,6 @@ class Discrete(Variable):
         """
         return self.domain.index(element)
 
-    def encode_many(self, elements: Iterable) -> Iterable[int]:
-        """
-        Encode many elements of the domain to their indices.
-
-        :param elements: The elements to encode
-        :return: The indices of the elements
-        """
-        return tuple(map(self.encode, elements))
-
     def decode(self, index: int) -> Any:
         """
         Decode an index to its element of the domain.
@@ -105,15 +132,6 @@ class Discrete(Variable):
         :return: The element itself
         """
         return self.domain[index]
-
-    def decode_many(self, indices: Iterable[int]) -> Iterable[Any]:
-        """
-        Decode many indices to their elements of the domain.
-
-        :param indices: The indices to decode
-        :return: The elements themselves
-        """
-        return tuple(map(self.decode, indices))
 
 
 class Symbolic(Discrete):
