@@ -63,16 +63,16 @@ class Variable(pydantic.BaseModel):
         :param elements: The elements to encode
         :return: The encoded elements
         """
-        return tuple(map(self.encode, elements))
+        return elements
 
-    def decode_many(self, indices: Iterable[int]) -> Iterable[Any]:
+    def decode_many(self, elements: Iterable) -> Iterable[Any]:
         """
         Decode many elements from the representations that are usable for computations to their domains.
 
-        :param indices: The encoded elements
+        :param elements: The encoded elements
         :return: The decoded elements
         """
-        return tuple(map(self.decode, indices))
+        return elements
 
 
 class Continuous(Variable):
@@ -132,6 +132,24 @@ class Discrete(Variable):
         :return: The element itself
         """
         return self.domain[index]
+
+    def encode_many(self, elements: Iterable) -> Iterable[int]:
+        """
+        Encode many elements of the domain to the indices of the elements.
+
+        :param elements: The elements to encode
+        :return: The encoded elements
+        """
+        return tuple(map(self.encode, elements))
+
+    def decode_many(self, elements: Iterable[int]) -> Iterable[Any]:
+        """
+        Decode many elements from indices to their domains.
+
+        :param elements: The encoded elements
+        :return: The decoded elements
+        """
+        return tuple(map(self.decode, elements))
 
 
 class Symbolic(Discrete):

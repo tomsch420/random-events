@@ -105,9 +105,12 @@ class EventTestCase(unittest.TestCase):
         """
         Test that events are correctly encoded.
         """
+        print(self.event)
         encoded = self.event.encode()
+        print(encoded)
         self.assertIsInstance(encoded, EncodedEvent)
         decoded = encoded.decode()
+        print(decoded)
         self.assertEqual(self.event, decoded)
 
     def test_intersection(self):

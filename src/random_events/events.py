@@ -301,8 +301,7 @@ class Event(EventMapType):
         Encode the event to an encoded event.
         :return: The encoded event
         """
-        return EncodedEvent({variable: variable.encode_many(element) if isinstance(variable, Discrete) else element for
-                             variable, element in self.items()})
+        return EncodedEvent({variable: variable.encode_many(element) for variable, element in self.items()})
 
     def is_empty(self) -> bool:
         """
@@ -346,5 +345,5 @@ class EncodedEvent(Event):
         :return: The decoded event
         """
         return Event(
-            {variable: variable.decode_many(index) if isinstance(variable, Discrete) else index for variable, index in
+            {variable: variable.decode_many(value) for variable, value in
              self.items()})
