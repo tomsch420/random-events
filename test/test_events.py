@@ -105,12 +105,9 @@ class EventTestCase(unittest.TestCase):
         """
         Test that events are correctly encoded.
         """
-        print(self.event)
         encoded = self.event.encode()
-        print(encoded)
         self.assertIsInstance(encoded, EncodedEvent)
         decoded = encoded.decode()
-        print(decoded)
         self.assertEqual(self.event, decoded)
 
     def test_intersection(self):
@@ -187,6 +184,16 @@ class EventTestCase(unittest.TestCase):
         self.assertEqual(self.event, self.event)
         self.assertNotEqual(self.event, Event())
 
+    def test_raises_on_operation_with_different_types(self):
+        with self.assertRaises(TypeError):
+            self.event & self.event.encode()
+
+        with self.assertRaises(TypeError):
+            self.event | self.event.encode()
+
+        with self.assertRaises(TypeError):
+            self.event - self.event.encode()
+
 
 class EncodedEventTestCase(unittest.TestCase):
 
@@ -237,6 +244,12 @@ class EncodedEventTestCase(unittest.TestCase):
         event = EncodedEvent(zip([self.integer, self.symbol], [[0, 1], 0]))
         self.assertEqual(event[self.integer], (0, 1))
         self.assertEqual(event[self.symbol], (0,))
+
+    def test_set_operations_return_type(self):
+        event = EncodedEvent(zip([self.integer, self.symbol], [1, 0]))
+        self.assertEqual(type(event & event), EncodedEvent)
+        self.assertEqual(type(event | event), EncodedEvent)
+        self.assertEqual(type(event - event), EncodedEvent)
 
 
 if __name__ == '__main__':

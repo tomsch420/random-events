@@ -59,6 +59,15 @@ class Event(EventMapType):
     A map of variables to values of their respective domains.
     """
 
+    def check_same_type(self, other: Any):
+        """
+        Check that both self and other are of the same type.
+
+        :param other: The other object
+        """
+        if type(self) is not type(other):
+            raise TypeError(f"Cannot use operation on {type(self)} with {type(other)}")
+
     def intersection(self, other: 'Event') -> 'Event':
         """
         Get the intersection of this and another event.
@@ -67,7 +76,10 @@ class Event(EventMapType):
 
         :return: The intersection
         """
-        result = Event()
+
+        self.check_same_type(other)
+
+        result = self.__class__()
 
         variables = set(self.keys()) | set(other.keys())
 
@@ -119,7 +131,10 @@ class Event(EventMapType):
 
         If one variable is only in one of the events, the union is the corresponding element.
         """
-        result = Event()
+
+        self.check_same_type(other)
+
+        result = self.__class__()
 
         variables = set(self.keys()) | set(other.keys())
 
@@ -171,7 +186,10 @@ class Event(EventMapType):
 
         If a variable appears only in `other`, it is assumed that `self` has the entire domain as default value.
         """
-        result = Event()
+
+        self.check_same_type(other)
+
+        result = self.__class__()
 
         variables = set(self.keys()) | set(other.keys())
 
@@ -219,7 +237,7 @@ class Event(EventMapType):
         """
         Get the complement of this event.
         """
-        return Event() - self
+        return self.__class__() - self
 
     __invert__ = complement
     """Alias for complement."""
@@ -231,6 +249,7 @@ class Event(EventMapType):
         If one variable is only in one of the events, it is assumed that the other event has the entire domain as
         default value.
         """
+
         variables = set(self.keys()) | set(other.keys())
 
         equal = True
@@ -318,8 +337,15 @@ class EncodedEvent(Event):
     @staticmethod
     def check_element(variable: Variable, element: Any) -> Union[tuple, portion.Interval]:
 
-        # if the variable is continuous, don't process the element
+        # if the variable is continuous
         if isinstance(variable, Continuous):
+
+            # if it's not an interval
+            if not isinstance(element, portion.Interval):
+
+                # try to convert it to one
+                element = portion.singleton(element)
+
             return element
 
         # if its any kind of iterable that's not an interval convert it to a tuple
