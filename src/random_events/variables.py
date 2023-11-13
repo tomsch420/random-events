@@ -1,8 +1,10 @@
 import json
-from typing import Any, Union, Iterable
+from typing import Any, Union, Iterable, Dict
 
 import portion
 import pydantic
+
+from . import utils
 
 
 class Variable(pydantic.BaseModel):
@@ -20,8 +22,14 @@ class Variable(pydantic.BaseModel):
     The set of possible events of the variable.
     """
 
+    type: str = pydantic.Field(repr=False, init_var=False, default=None)
+    """
+    The type of the variable. This is used for de-serialization and set automatically in the constructor.
+    """
+
     def __init__(self, name: str, domain: Any):
         super().__init__(name=name, domain=domain)
+        self.type = utils.get_full_class_name(self.__class__)
 
     def __lt__(self, other: "Variable") -> bool:
         """
@@ -73,6 +81,20 @@ class Variable(pydantic.BaseModel):
         :return: The decoded elements
         """
         return elements
+
+    @staticmethod
+    def from_json(data: Dict[str, Any]) -> 'Variable':
+        """
+        Create the correct instanceof the subclass from a json dict.
+
+        :param data: The json dict
+        :return: The correct instance of the subclass
+        """
+        for subclass in utils.recursive_subclasses(Variable):
+            if utils.get_full_class_name(subclass) == data["type"]:
+                return subclass(**{key: value for key, value in data.items() if key != "type"})
+
+        raise ValueError("Unknown type for variable. Type is {}".format(data["type"]))
 
 
 class Continuous(Variable):
