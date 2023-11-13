@@ -1,13 +1,11 @@
-import json
-from typing import Any, Union, Iterable, Dict
+from typing import Any, Iterable, Dict, Tuple
 
 import portion
-import pydantic
 
 from . import utils
 
 
-class Variable(pydantic.BaseModel):
+class Variable:
     """
     Abstract base class for all variables.
     """
@@ -17,19 +15,14 @@ class Variable(pydantic.BaseModel):
     The name of the variable. The name is used for comparison and hashing.
     """
 
-    domain: Any = pydantic.Field(repr=False)
+    domain: Any
     """
     The set of possible events of the variable.
     """
 
-    type: str = pydantic.Field(repr=False, init_var=False, default=None)
-    """
-    The type of the variable. This is used for de-serialization and set automatically in the constructor.
-    """
-
     def __init__(self, name: str, domain: Any):
-        super().__init__(name=name, domain=domain)
-        self.type = utils.get_full_class_name(self.__class__)
+        self.name = name
+        self.domain = domain
 
     def __lt__(self, other: "Variable") -> bool:
         """
@@ -45,6 +38,15 @@ class Variable(pydantic.BaseModel):
 
     def __hash__(self) -> int:
         return self.name.__hash__()
+
+    def __eq__(self, other):
+        return self.name == other.name and self.domain == other.domain
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.name}, {self.domain})"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.name})"
 
     def encode(self, value: Any) -> Any:
         """
@@ -82,8 +84,22 @@ class Variable(pydantic.BaseModel):
         """
         return elements
 
-    @staticmethod
-    def from_json(data: Dict[str, Any]) -> 'Variable':
+    def to_json(self) -> Dict[str, Any]:
+        return {"name": self.name, "type": utils.get_full_class_name(self.__class__), "domain": self.domain}
+
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> 'Variable':
+        """
+        Create a variable from a json dict.
+        This method is called from the from_json method after the correct subclass is determined.
+
+        :param data: The json dict
+        :return: The variable
+        """
+        return cls(name=data["name"], domain=data["domain"])
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> 'Variable':
         """
         Create the correct instanceof the subclass from a json dict.
 
@@ -92,7 +108,7 @@ class Variable(pydantic.BaseModel):
         """
         for subclass in utils.recursive_subclasses(Variable):
             if utils.get_full_class_name(subclass) == data["type"]:
-                return subclass(**{key: value for key, value in data.items() if key != "type"})
+                return subclass._from_json(data)
 
         raise ValueError("Unknown type for variable. Type is {}".format(data["type"]))
 
@@ -102,37 +118,25 @@ class Continuous(Variable):
     Class for real valued random variables.
     """
 
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    domain: portion.Interval = pydantic.Field(portion.open(-portion.inf, portion.inf), repr=False)
+    domain: portion.Interval
 
     def __init__(self, name: str, domain: portion.Interval = portion.open(-portion.inf, portion.inf)):
         super().__init__(name=name, domain=domain)
 
-    @pydantic.field_serializer("domain")
-    def serialize_domain(self, interval: portion.Interval) -> str:
-        """
-        Serialize the domain of this variable to a string.
-        :param interval: The domain
-        :return: A json string of it
-        """
-        return json.dumps(portion.to_data(interval))
+    def to_json(self) -> Dict[str, Any]:
+        return {"name": self.name, "type": utils.get_full_class_name(self.__class__),
+                "domain": portion.to_data(self.domain)}
 
-    @pydantic.field_validator("domain", mode="before")
-    def validate_domain(cls, interval: Union[portion.Interval, str]) -> portion.Interval:
-        if isinstance(interval, str):
-            return portion.from_data(json.loads(interval))
-        elif isinstance(interval, portion.Interval):
-            return interval
-        else:
-            raise ValueError("Unknown type for domain. Type is {}".format(type(interval)))
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> 'Variable':
+        return cls(name=data["name"], domain=portion.from_data(data["domain"]))
 
 
 class Discrete(Variable):
     """
     Class for discrete countable random variables.
     """
-    domain: tuple = pydantic.Field(repr=False)
+    domain: Tuple
 
     def __init__(self, name: str, domain: Iterable):
         super().__init__(name=name, domain=tuple(sorted(set(domain))))

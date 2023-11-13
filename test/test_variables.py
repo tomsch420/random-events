@@ -1,4 +1,3 @@
-import json
 import unittest
 
 import portion
@@ -63,9 +62,9 @@ class VariablesTestCase(unittest.TestCase):
         """
         Test that the variables can be dumped to json.
         """
-        self.assertTrue(self.symbol.model_dump_json())
-        self.assertTrue(self.integer.model_dump_json())
-        self.assertTrue(self.real.model_dump_json())
+        self.assertTrue(self.symbol.to_json())
+        self.assertTrue(self.integer.to_json())
+        self.assertTrue(self.real.to_json())
 
     def test_encode(self):
         """
@@ -83,20 +82,14 @@ class VariablesTestCase(unittest.TestCase):
         self.assertEqual(self.symbol.decode(1), "b")
         self.assertEqual(self.real.decode(1.0), 1.0)
 
-    def test_type_setting(self):
-        self.assertEqual(self.real.type, "random_events.variables.Continuous")
-        self.assertEqual(self.integer.type, "random_events.variables.Integer")
-        self.assertEqual(self.symbol.type, "random_events.variables.Symbolic")
-
     def test_polymorphic_serialization(self):
-        real = Variable.from_json(json.loads(self.real.model_dump_json()))
+        real = Variable.from_json(self.real.to_json())
         self.assertEqual(real, self.real)
 
-        integer = Variable.from_json(json.loads(self.integer.model_dump_json()))
-        print(integer)
+        integer = Variable.from_json(self.integer.to_json())
         self.assertEqual(integer, self.integer)
 
-        symbol = Variable.from_json(json.loads(self.symbol.model_dump_json()))
+        symbol = Variable.from_json(self.symbol.to_json())
         self.assertEqual(symbol, self.symbol)
 
 
