@@ -31,8 +31,7 @@ They are structured as follows
 .. autoapi-inheritance-diagram:: random_events.variables
 
 
-All variables inherit from `pydantic <https://docs.pydantic.dev/latest/>`_'s BaseModel, which means that they are easily serializable and
-come with a lot of utility functions. Variables are order-able and comparable by their name.
+Variables are order-able and comparable by their name.
 
 Variables split in two categories, :class:`random_events.variables.Discrete` and
 :class:`random_events.variables.Continuous`.
