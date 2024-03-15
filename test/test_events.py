@@ -366,6 +366,18 @@ class ComplexEventTestCase(unittest.TestCase):
         for event in union.events:
             self.assertEqual(len(event), 2)
 
+    def test_copy(self):
+        event = Event({self.x: portion.closed(0, 1), self.y: portion.closed(0, 1)})
+        copied = event.copy()
+        self.assertEqual(event, copied)
+        self.assertIsNot(event, copied)
+
+    def test_decode_encode(self):
+        event = Event({self.x: portion.closed(0, 1), self.y: portion.closed(0, 1)})
+        encoded = event.encode()
+        decoded = encoded.decode()
+        self.assertEqual(event, decoded)
+
 
 class PlottingTestCase(unittest.TestCase):
     x: Continuous = Continuous("x")

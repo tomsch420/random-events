@@ -421,6 +421,12 @@ class Event(SupportsSetOperations, EventMapType):
             if variable not in self:
                 self[variable] = variable.domain
 
+    def decode(self):
+        """
+        Decode the event to a normal event.
+        :return: The decoded event
+        """
+        return self.__copy__()
 
 class EncodedEvent(Event):
     """
@@ -458,17 +464,16 @@ class EncodedEvent(Event):
 
         return element
 
-    def decode(self) -> Event:
-        """
-        Decode the event to a normal event.
-        :return: The decoded event
-        """
-        return Event({variable: variable.decode_many(value) for variable, value in self.items()})
-
     def fill_missing_variables(self, variables: Iterable[Variable]):
         for variable in variables:
             if variable not in self:
                 self[variable] = variable.encode_many(variable.domain)
+
+    def decode(self) -> Event:
+        return Event({variable: variable.decode_many(value) for variable, value in self.items()})
+
+    def encode(self) -> Self:
+        return self.__copy__()
 
 
 class ComplexEvent(SupportsSetOperations):
@@ -659,6 +664,19 @@ class ComplexEvent(SupportsSetOperations):
 
     def is_empty(self) -> bool:
         return len(self.events) == 0
+
+    def encode(self) -> 'ComplexEvent':
+        """
+        Encode the event to an encoded event.
+        :return: The encoded event
+        """
+        return ComplexEvent([event.encode() for event in self.events])
+
+    def decode(self) -> ComplexEvent:
+        """
+        Decode the event to a normal event.
+        """
+        return ComplexEvent([event.decode() for event in self.events])
 
 
 EventType = Union[Event, EncodedEvent, ComplexEvent]
