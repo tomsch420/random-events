@@ -135,13 +135,10 @@ class Event(SupportsSetOperations, EventMapType):
         result = self.__class__()
 
         variables = set(self.keys()) | set(other.keys())
-
         for variable in variables:
             assignment1 = self.get(variable, variable.domain)
             assignment2 = other.get(variable, variable.domain)
             intersection = variable.intersection_of_assignments(assignment1, assignment2)
-            if len(intersection) == 0:
-                return self.__class__()
             result[variable] = intersection
 
         return result

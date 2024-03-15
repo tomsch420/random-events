@@ -237,6 +237,13 @@ class EncodedEventTestCase(unittest.TestCase):
         self.assertEqual(type(event | event), ComplexEvent)
         self.assertEqual(type(event - event), ComplexEvent)
 
+    def test_intersection_with_empty(self):
+        event = Event({self.integer: ()})
+        complete_event = Event({self.integer: self.integer.domain})
+        intersection = event.intersection(complete_event)
+        self.assertIn(self.integer, intersection.keys())
+        self.assertTrue(intersection.is_empty())
+
 
 class ComplexEventTestCase(unittest.TestCase):
 

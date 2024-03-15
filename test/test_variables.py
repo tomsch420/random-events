@@ -101,5 +101,6 @@ class VariablesTestCase(unittest.TestCase):
         self.assertEqual(self.symbol.complement_of_assignment(("a",)), ("b", "c", ))
 
 
+
 if __name__ == '__main__':
     unittest.main()
