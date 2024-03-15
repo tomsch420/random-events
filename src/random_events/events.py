@@ -7,7 +7,7 @@ import numpy as np
 import portion
 import plotly.graph_objects as go
 
-from typing_extensions import Set, Union, Any, TYPE_CHECKING, Iterable, List, Self, Dict
+from typing_extensions import Set, Union, Any, TYPE_CHECKING, Iterable, List, Self, Dict, Tuple
 
 from .variables import Variable, Continuous, Discrete
 
@@ -173,7 +173,7 @@ class Event(SupportsSetOperations, EventMapType):
 
         # add the fragments of the other event
         complex_self.events.extend(fragments_of_other.events)
-        return complex_self
+        return ComplexEvent(complex_self.events)
 
     def difference(self, other: EventType) -> ComplexEvent:
         # if the other is a complex event
@@ -413,6 +413,14 @@ class Event(SupportsSetOperations, EventMapType):
     def __hash__(self):
         return hash(tuple(sorted(self.items())))
 
+    def fill_missing_variables(self, variables: Iterable[Variable]):
+        """
+        Fill missing variables with their entire domain.
+        """
+        for variable in variables:
+            if variable not in self:
+                self[variable] = variable.domain
+
 
 class EncodedEvent(Event):
     """
@@ -457,6 +465,11 @@ class EncodedEvent(Event):
         """
         return Event({variable: variable.decode_many(value) for variable, value in self.items()})
 
+    def fill_missing_variables(self, variables: Iterable[Variable]):
+        for variable in variables:
+            if variable not in self:
+                self[variable] = variable.encode_many(variable.domain)
+
 
 class ComplexEvent(SupportsSetOperations):
     """
@@ -466,8 +479,20 @@ class ComplexEvent(SupportsSetOperations):
 
     def __init__(self, events: Iterable[Event]):
         self.events = list(event for event in events if not event.is_empty())
+        variables = self.variables
+        for event in self.events:
+            event.fill_missing_variables(variables)
 
-    def union(self, other: Self) -> Self:
+    @property
+    def variables(self) -> Tuple[Variable, ...]:
+        """
+        Get the variables of the complex event.
+        """
+        return tuple(sorted(set(variable for event in self.events for variable in event.keys())))
+
+    def union(self, other: EventType) -> Self:
+        if isinstance(other, Event):
+            return self.union(ComplexEvent([other]))
         result = ComplexEvent(self.events + other.events)
         return result.make_events_disjoint().simplify()
 
@@ -573,11 +598,15 @@ class ComplexEvent(SupportsSetOperations):
         # if no simplification is possible, return the current complex event
         return self.__copy__()
 
-    def intersection(self, other: Self) -> Self:
+    def intersection(self, other: EventType) -> Self:
+        if isinstance(other, Event):
+            return self.intersection(ComplexEvent([other]))
         intersections = [event.intersection(other_event) for other_event in other.events for event in self.events]
         return ComplexEvent(intersections)
 
-    def difference(self, other: Self) -> Self:
+    def difference(self, other: EventType) -> Self:
+        if isinstance(other, Event):
+            return self.difference(ComplexEvent([other]))
         return self.intersection(other.complement())
 
     def complement(self) -> Self:

@@ -352,6 +352,20 @@ class ComplexEventTestCase(unittest.TestCase):
         self.assertEqual(len(copied_event.events), 1)
         self.assertEqual(copied_event.events[0], event)
 
+    def test_union_of_simple_with_complex(self):
+        event = Event({self.x: portion.closed(0, 1), self.y: portion.closed(0, 1)})
+        complex_event = ComplexEvent([event])
+        union1 = event.union(complex_event)
+        union2 = complex_event.union(event)
+        self.assertEqual(union1, union2)
+
+    def test_union_with_different_variables(self):
+        event1 = Event({self.x: portion.closed(0, 1)})
+        event2 = Event({self.y: portion.closed(0, 1)})
+        union = event1.union(event2)
+        for event in union.events:
+            self.assertEqual(len(event), 2)
+
 
 class PlottingTestCase(unittest.TestCase):
     x: Continuous = Continuous("x")
