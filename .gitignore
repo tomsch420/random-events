@@ -5,3 +5,4 @@ doc/static
 build
 dist
 src/random_events.egg-info
+*/__pycache__/

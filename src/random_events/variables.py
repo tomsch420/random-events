@@ -1,8 +1,11 @@
 from typing import Any, Iterable, Dict, Tuple
 
 import portion
+from typing_extensions import Union
 
 from . import utils
+
+AssignmentType = Union[portion.Interval, Tuple]
 
 
 class Variable:
@@ -15,7 +18,7 @@ class Variable:
     The name of the variable. The name is used for comparison and hashing.
     """
 
-    domain: Any
+    domain: AssignmentType
     """
     The set of possible events of the variable.
     """
@@ -112,6 +115,44 @@ class Variable:
 
         raise ValueError("Unknown type for variable. Type is {}".format(data["type"]))
 
+    def complement_of_assignment(self, assignment: AssignmentType, encoded: bool = False) -> AssignmentType:
+        """
+        Returns the complement of the assignment for the variable.
+
+        :param assignment: The assignment
+        :param encoded: If the assignment is encoded
+        :return: The complement of the assignment
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def intersection_of_assignments(assignment1: AssignmentType,
+                                    assignment2: AssignmentType,
+                                    encoded: bool = False) -> AssignmentType:
+        """
+        Returns the intersection of two assignments
+
+        :param assignment1: The first assignment
+        :param assignment2: The second assignment
+                :param encoded: If the assignment is encoded
+        :return: The intersection of the assignments
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def union_of_assignments(assignment1: AssignmentType,
+                             assignment2: AssignmentType,
+                             encoded: bool = False) -> AssignmentType:
+            """
+            Returns the union of two assignments
+
+            :param assignment1: The first assignment
+            :param assignment2: The second assignment
+            :param encoded: If the assignment is encoded
+            :return: The union of the assignments
+            """
+            raise NotImplementedError
+
 
 class Continuous(Variable):
     """
@@ -130,6 +171,21 @@ class Continuous(Variable):
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> 'Variable':
         return cls(name=data["name"], domain=portion.from_data(data["domain"]))
+
+    def complement_of_assignment(self, assignment: portion.Interval, encoded: bool = False) -> portion.Interval:
+        return self.domain - assignment
+
+    @staticmethod
+    def intersection_of_assignments(assignment1: portion.Interval,
+                                    assignment2: portion.Interval,
+                                    encoded: bool = False) -> portion.Interval:
+        return assignment1 & assignment2
+
+    @staticmethod
+    def union_of_assignments(assignment1: portion.Interval,
+                             assignment2: portion.Interval,
+                             encoded: bool = False) -> portion.Interval:
+        return assignment1 | assignment2
 
 
 class Discrete(Variable):
@@ -176,6 +232,25 @@ class Discrete(Variable):
         :return: The decoded elements
         """
         return tuple(map(self.decode, elements))
+
+    def complement_of_assignment(self, assignment: Tuple, encoded: bool = False) -> Tuple:
+        if not encoded:
+            return tuple(sorted(set(self.domain) - set(assignment)))
+        else:
+            return tuple(sorted(set(range(len(self.domain))) - set(assignment)))
+
+    @staticmethod
+    def intersection_of_assignments(assignment1: Tuple,
+                                    assignment2: Tuple,
+                                    encoded: bool = False) -> Tuple:
+
+        return tuple(sorted(set(assignment1) & set(assignment2)))
+
+    @staticmethod
+    def union_of_assignments(assignment1: Tuple,
+                             assignment2: Tuple,
+                             encoded: bool = False) -> Tuple:
+        return tuple(sorted(set(assignment1) | set(assignment2)))
 
 
 class Symbolic(Discrete):

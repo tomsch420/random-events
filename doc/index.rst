@@ -17,6 +17,9 @@ Install the package via
 
     pip install random-events
 
+The formalism behind this package is the
+`Product Measure <https://www.math.ucdavis.edu/~hunter/measure_theory/measure_notes_ch5.pdf>`_.
+
 Introduction
 ============
 The package contains two modules.
@@ -81,10 +84,13 @@ the event that the animal is either a dog or a cat.
 
 Furthermore, intersections of events are possible. The intersection is done variable wise.
 
-The last class is the :class:`random_events.events.EncodedEvent` class, which converts events to
+The next class is the :class:`random_events.events.EncodedEvent` class, which converts events to
 representations that are usable for indexing. For discrete variables, the values are converted to
 indices, while for continuous variables, the values are not changed.
 
+The last class is the :class:`random_events.events.ComplexEvent` class. This class holds a list of disjoint
+events. It can be seen as the result of operations where the result is not a single event, but a set of events.
+Formally, it is the product outer measure.
 
 Examples
 ========

@@ -92,6 +92,14 @@ class VariablesTestCase(unittest.TestCase):
         symbol = Variable.from_json(self.symbol.to_json())
         self.assertEqual(symbol, self.symbol)
 
+    def test_complement_of_assignment(self):
+        """
+        Test that the complement of an assignment is correct.
+        """
+        self.assertEqual(self.real.complement_of_assignment(portion.closed(0, 1)),
+                         portion.open(-portion.inf, 0) | portion.open(1, portion.inf))
+        self.assertEqual(self.symbol.complement_of_assignment(("a",)), ("b", "c", ))
+
 
 if __name__ == '__main__':
     unittest.main()
