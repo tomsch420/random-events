@@ -428,6 +428,13 @@ class Event(SupportsSetOperations, EventMapType):
         """
         return self.__copy__()
 
+    def marginal_event(self, variables: Iterable[Variable]) -> Self:
+        """
+        Get the marginal event of this event with respect to a variable.
+        """
+        return self.__class__({variable: self[variable] for variable in variables if variable in self})
+
+
 class EncodedEvent(Event):
     """
     A map of variables to indices of their respective domains.
@@ -474,6 +481,7 @@ class EncodedEvent(Event):
 
     def encode(self) -> Self:
         return self.__copy__()
+
 
 
 class ComplexEvent(SupportsSetOperations):
@@ -577,6 +585,9 @@ class ComplexEvent(SupportsSetOperations):
         are merged.
         """
 
+        if len(self.variables) == 1:
+            return self.merge_if_one_dimensional()
+
         # for every pair of events
         for index, event in enumerate(self.events):
             for other_event in self.events[index + 1:]:
@@ -677,6 +688,25 @@ class ComplexEvent(SupportsSetOperations):
         Decode the event to a normal event.
         """
         return ComplexEvent([event.decode() for event in self.events])
+
+    def marginal_event(self, variables: Iterable[Variable]) -> Self:
+        """
+        Get the marginal event of this complex event with respect to a variable.
+        """
+        return ComplexEvent([event.marginal_event(variables) for event in self.events]).simplify()
+
+    def merge_if_one_dimensional(self) -> Self:
+        """
+        Merge all events into a single event if they are all one-dimensional.
+        """
+        if not len(self.variables) == 1:
+            return self
+        variable = self.variables[0]
+        value = self.events[0][variable]
+
+        for event in self.events[1:]:
+            value = variable.union_of_assignments(value, event[variable])
+        return ComplexEvent([Event({variable: value})])
 
 
 EventType = Union[Event, EncodedEvent, ComplexEvent]

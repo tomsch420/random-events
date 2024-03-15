@@ -378,6 +378,22 @@ class ComplexEventTestCase(unittest.TestCase):
         decoded = encoded.decode()
         self.assertEqual(event, decoded)
 
+    def test_marginal_event(self):
+        event = Event({self.x: portion.closed(0, 1), self.y: portion.closed(0, 1)})
+        complement = event.complement()
+        marginal_event = complement.marginal_event([self.x])
+        self.assertEqual(len(marginal_event.events), 1)
+        self.assertEqual(marginal_event.events[0][self.x], portion.open(-portion.inf, portion.inf))
+
+    def test_merge_if_1d(self):
+        event1 = Event({self.x: portion.closed(0, 1)})
+        event2 = Event({self.x: portion.closed(3, 4)})
+        complex_event = ComplexEvent([event1, event2])
+        merged = complex_event.merge_if_one_dimensional()
+        self.assertEqual(len(merged.events), 1)
+        self.assertEqual(merged.events[0][self.x], portion.closed(0, 1) | portion.closed(3, 4))
+
+
 
 class PlottingTestCase(unittest.TestCase):
     x: Continuous = Continuous("x")
