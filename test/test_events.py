@@ -421,6 +421,15 @@ class ComplexEventTestCase(unittest.TestCase):
         complement_ = ComplexEvent.from_json(json)
         self.assertEqual(complement, complement_)
 
+    def test_intersection_symbol_and_real(self):
+        event = ComplexEvent([EncodedEvent({self.x: portion.closed(0, 1)})])
+        event2 = EncodedEvent({self.a: (0, )})
+        result = event & event2
+        self.assertEqual(len(result.events), 1)
+        event_ = result.events[0]
+        self.assertEqual(event_[self.x], portion.closed(0, 1))
+        self.assertEqual(event_[self.a], (0, ))
+
 
 class PlottingTestCase(unittest.TestCase):
     x: Continuous = Continuous("x")

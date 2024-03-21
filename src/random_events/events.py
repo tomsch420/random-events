@@ -137,8 +137,8 @@ class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
 
         variables = set(self.keys()) | set(other.keys())
         for variable in variables:
-            assignment1 = self.get(variable, variable.domain)
-            assignment2 = other.get(variable, variable.domain)
+            assignment1 = self.get(variable, variable.encoded_domain if isinstance(self, EncodedEvent) else variable.domain)
+            assignment2 = other.get(variable, variable.encoded_domain if isinstance(self, EncodedEvent) else variable.domain)
             intersection = variable.intersection_of_assignments(assignment1, assignment2)
             result[variable] = intersection
 

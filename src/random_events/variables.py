@@ -151,6 +151,10 @@ class Variable(utils.SubclassJSONSerializer):
         """
         raise NotImplementedError
 
+    @property
+    def encoded_domain(self):
+        return self.encode_many(self.domain)
+
 
 class Continuous(Variable):
     """
