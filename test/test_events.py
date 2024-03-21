@@ -180,6 +180,17 @@ class EventTestCase(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.event - self.event.encode()
 
+    def test_serialization(self):
+        json = self.event.to_json()
+        event = Event.from_json(json)
+        self.assertEqual(event, self.event)
+
+    def test_serialization_with_complex_interval(self):
+        event = Event({self.real: portion.closed(0, 1) | portion.closed(2, 3)})
+        json = event.to_json()
+        event_ = Event.from_json(json)
+        self.assertEqual(event_, event)
+
 
 class EncodedEventTestCase(unittest.TestCase):
 
@@ -243,6 +254,16 @@ class EncodedEventTestCase(unittest.TestCase):
         intersection = event.intersection(complete_event)
         self.assertIn(self.integer, intersection.keys())
         self.assertTrue(intersection.is_empty())
+
+    def test_serialization(self):
+        event = EncodedEvent()
+        event[self.integer] = (1, 2)
+        event[self.symbol] = {1, 0}
+        event[self.real] = portion.open(0, 1)
+
+        json = event.to_json()
+        event_ = EncodedEvent.from_json(json)
+        self.assertEqual(event, event_)
 
 
 class ComplexEventTestCase(unittest.TestCase):
@@ -393,6 +414,12 @@ class ComplexEventTestCase(unittest.TestCase):
         self.assertEqual(len(merged.events), 1)
         self.assertEqual(merged.events[0][self.x], portion.closed(0, 1) | portion.closed(3, 4))
 
+    def test_serialization(self):
+        event = Event({self.x: portion.closed(0, 1), self.y: portion.closed(0, 1)})
+        complement = event.complement()
+        json = complement.to_json()
+        complement_ = ComplexEvent.from_json(json)
+        self.assertEqual(complement, complement_)
 
 
 class PlottingTestCase(unittest.TestCase):

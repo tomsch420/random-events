@@ -8,7 +8,7 @@ from . import utils
 AssignmentType = Union[portion.Interval, Tuple]
 
 
-class Variable:
+class Variable(utils.SubclassJSONSerializer):
     """
     Abstract base class for all variables.
     """
@@ -101,20 +101,6 @@ class Variable:
         """
         return cls(name=data["name"], domain=data["domain"])
 
-    @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> 'Variable':
-        """
-        Create the correct instanceof the subclass from a json dict.
-
-        :param data: The json dict
-        :return: The correct instance of the subclass
-        """
-        for subclass in utils.recursive_subclasses(Variable):
-            if utils.get_full_class_name(subclass) == data["type"]:
-                return subclass._from_json(data)
-
-        raise ValueError("Unknown type for variable. Type is {}".format(data["type"]))
-
     def complement_of_assignment(self, assignment: AssignmentType, encoded: bool = False) -> AssignmentType:
         """
         Returns the complement of the assignment for the variable.
@@ -153,6 +139,18 @@ class Variable:
             """
             raise NotImplementedError
 
+    def assignment_to_json(self, assignment: AssignmentType) -> Any:
+        """
+        Convert an assignment to a json serializable object.
+        """
+        raise NotImplementedError
+
+    def assignment_from_json(self, data: Any) -> AssignmentType:
+        """
+        Convert an assignment from a json serializable object.
+        """
+        raise NotImplementedError
+
 
 class Continuous(Variable):
     """
@@ -186,6 +184,12 @@ class Continuous(Variable):
                              assignment2: portion.Interval,
                              encoded: bool = False) -> portion.Interval:
         return assignment1 | assignment2
+
+    def assignment_to_json(self, assignment: portion.Interval) -> Any:
+        return portion.to_data(assignment)
+
+    def assignment_from_json(self, data: Any) -> portion.Interval:
+        return portion.from_data(data)
 
 
 class Discrete(Variable):
@@ -251,6 +255,12 @@ class Discrete(Variable):
                              assignment2: Tuple,
                              encoded: bool = False) -> Tuple:
         return tuple(sorted(set(assignment1) | set(assignment2)))
+
+    def assignment_to_json(self, assignment: Tuple) -> Tuple:
+        return assignment
+
+    def assignment_from_json(self, data: Any) -> AssignmentType:
+        return tuple(data)
 
 
 class Symbolic(Discrete):

@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from typing_extensions import Set, Union, Any, TYPE_CHECKING, Iterable, List, Self, Dict, Tuple
 
 from .variables import Variable, Continuous, Discrete
+from .utils import SubclassJSONSerializer
 
 
 # Type hinting for Python 3.7 to 3.9
@@ -109,7 +110,7 @@ class SupportsSetOperations:
         raise NotImplementedError
 
 
-class Event(SupportsSetOperations, EventMapType):
+class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
     """
     A map of variables to values of their respective domains.
     """
@@ -434,6 +435,21 @@ class Event(SupportsSetOperations, EventMapType):
         """
         return self.__class__({variable: self[variable] for variable in variables if variable in self})
 
+    def to_json(self) -> Dict[str, Any]:
+        result = super().to_json()
+        event = [(variable.to_json(), variable.assignment_to_json(assignment)) for variable, assignment in self.items()]
+        result["event"] = event
+        return result
+
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> Self:
+        result = cls()
+        for variable_json, assignment_json in data["event"]:
+            variable = Variable.from_json(variable_json)
+            assignment = variable.assignment_from_json(assignment_json)
+            result[variable] = assignment
+        return result
+
 
 class EncodedEvent(Event):
     """
@@ -483,8 +499,7 @@ class EncodedEvent(Event):
         return self.__copy__()
 
 
-
-class ComplexEvent(SupportsSetOperations):
+class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
     """
     A complex event is a set of mutually exclusive events.
     """
@@ -707,6 +722,17 @@ class ComplexEvent(SupportsSetOperations):
         for event in self.events[1:]:
             value = variable.union_of_assignments(value, event[variable])
         return ComplexEvent([Event({variable: value})])
+
+    def to_json(self) -> Dict[str, Any]:
+        result = super().to_json()
+        events = [event.to_json() for event in self.events]
+        result["events"] = events
+        return result
+
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> Self:
+        events = [Event.from_json(event) for event in data["events"]]
+        return cls(events)
 
 
 EventType = Union[Event, EncodedEvent, ComplexEvent]
