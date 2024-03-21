@@ -346,7 +346,9 @@ class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
         # form cartesian product of all intervals
         intervals = [value._intervals for value in self.values()]
         simple_events = list(itertools.product(*intervals))
-        traces = []
+
+        xs = []
+        ys = []
 
         # for every atomic interval
         for simple_event in simple_events:
@@ -355,9 +357,10 @@ class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
             points = np.asarray(list(itertools.product(*[[axis.lower, axis.upper] for axis in simple_event])))
             y_points = points[:, 1]
             y_points[len(y_points) // 2:] = y_points[len(y_points) // 2:][::-1]
-            traces.append(go.Scatter(x=np.append(points[:, 0], points[0, 0]), y=np.append(y_points, y_points[0]),
-                                     mode="lines", name="Event", fill="toself"))
-        return traces
+            xs.extend(points[:, 0].tolist() + [points[0, 0], None])
+            ys.extend(y_points.tolist()+ [y_points[0], None])
+
+        return [go.Scatter(x=xs, y=ys, mode="lines", name="Event", fill="toself")]
 
     def plot_3d(self) -> List[go.Mesh3d]:
         """
@@ -396,7 +399,7 @@ class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
         """
         Create a layout for the plotly plot.
         """
-        variables = list(self.keys())
+        variables = list(sorted(self.keys()))
         if len(variables) == 2:
             result = {"xaxis_title": variables[0].name,
                       "yaxis_title": variables[1].name}
@@ -510,6 +513,7 @@ class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
         variables = self.variables
         for event in self.events:
             event.fill_missing_variables(variables)
+        self.events = [event.__class__(sorted(event.items())) for event in self.events]
 
     @property
     def variables(self) -> Tuple[Variable, ...]:
@@ -673,13 +677,21 @@ class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
     def __copy__(self):
         return self.__class__([event.copy() for event in self.events])
 
-    def plot(self) -> Union[List[go.Scatter], List[go.Mesh3d]]:
+    def plot(self, color="#636EFA") -> Union[List[go.Scatter], List[go.Mesh3d]]:
         """
         Plot the complex event.
+
+        :param color: The color to use for this event
         """
         traces = []
-        for event in self.events:
-            traces.extend(event.plot())
+        show_legend = True
+        for index, event in enumerate(self.events):
+            event_traces = event.plot()
+            for event_trace in event_traces:
+                if len(event.keys()) == 2:
+                    event_trace.update(legendgroup="Event", showlegend=show_legend, line=dict(color=color))
+                    show_legend = False
+                traces.append(event_trace)
         return traces
 
     def plotly_layout(self) -> Dict:

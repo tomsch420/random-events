@@ -450,9 +450,9 @@ class PlottingTestCase(unittest.TestCase):
         event = Event({self.x: portion.closed(0, 1), self.y: portion.closed(0, 1)})
         complement = event.complement()
         limiting_event = Event({self.x: portion.closed(-1, 2), self.y: portion.closed(-1, 2)})
-        result = complement.intersection(ComplexEvent([limiting_event]))
+        result = complement.intersection(limiting_event)
         fig = go.Figure(result.plot(), result.plotly_layout())
-        # fig.show()
+        #  fig.show()
 
     def test_plot_complex_event_3d(self):
         event = Event({self.x: portion.closed(0, 1),
