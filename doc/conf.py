@@ -5,6 +5,7 @@
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
+import os
 
 # -- Path setup --------------------------------------------------------------
 
@@ -98,7 +99,8 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['static']
+html_static_path = ['_static']
+html_logo = os.path.join("logo", "Tomato.png")
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

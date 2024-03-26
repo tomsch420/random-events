@@ -368,7 +368,7 @@ class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
         """
 
         # form cartesian product of all intervals
-        intervals = [value._intervals for value in self.values()]
+        intervals = [value._intervals for _, value in sorted(self.items())]
         simple_events = list(itertools.product(*intervals))
         traces = []
 
@@ -649,7 +649,7 @@ class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
         for event in self.events[1:]:
             current_complement = event.complement()
             result = result.intersection(current_complement)
-        return result.make_events_disjoint().simplify()
+        return result.make_events_disjoint() #  .simplify()
 
     def are_events_disjoint(self) -> bool:
         """
@@ -689,8 +689,11 @@ class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
             event_traces = event.plot()
             for event_trace in event_traces:
                 if len(event.keys()) == 2:
-                    event_trace.update(legendgroup="Event", showlegend=show_legend, line=dict(color=color))
-                    show_legend = False
+                    event_trace.update(name="Event", legendgroup=id(self), showlegend=show_legend,
+                                       line=dict(color=color))
+                if len(event.keys()) == 3:
+                    event_trace.update(name="Event", legendgroup=id(self), showlegend=show_legend, color=color)
+                show_legend = False
                 traces.append(event_trace)
         return traces
 

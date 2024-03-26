@@ -369,6 +369,7 @@ class ComplexEventTestCase(unittest.TestCase):
     def test_chained_complement(self):
         event = Event({self.x: portion.closed(0, 1), self.y: portion.closed(0, 1)})
         complement = event.complement()
+        self.assertEqual(len(complement.events), 2)
         copied_event = complement.complement()
         self.assertEqual(len(copied_event.events), 1)
         self.assertEqual(copied_event.events[0], event)

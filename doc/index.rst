@@ -96,8 +96,9 @@ Examples
 ========
 
 .. nbgallery::
-   notebooks/example
-   notebooks/independent_constraints
+   examples/example
+   examples/product_spaces
+   examples/logo_generation
 
 .. toctree::
    :maxdepth: 2
