@@ -115,6 +115,9 @@ class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
     A map of variables to values of their respective domains.
     """
 
+    def __str__(self):
+        return "{" + ", ".join(f"{variable.name}: {value}" for variable, value in self.items()) + "}"
+
     def check_same_type(self, other: Any):
         """
         Check that both self and other are of the same type.
