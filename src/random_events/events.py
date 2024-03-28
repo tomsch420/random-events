@@ -456,6 +456,13 @@ class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
             result[variable] = assignment
         return result
 
+    def get_variables_where_assignment_is_different(self, other: Self) -> List[Variable]:
+        """
+        Get all variables where the assignment is different from the other event's assignment
+        """
+        return [variable for variable in self.keys() if self[variable] != other[variable]]
+
+
 
 class EncodedEvent(Event):
     """
@@ -605,33 +612,44 @@ class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
         """
         Simplify the complex event such that sub-unions of events that can be expressed as a single events
         are merged.
+
+        This is done by seeking events that are equal in all but one dimensions to another event and merging them.
         """
 
         if len(self.variables) == 1:
             return self.merge_if_one_dimensional()
 
-        # for every pair of events
+        # for every unique pair of events
         for index, event in enumerate(self.events):
-            for other_event in self.events[index + 1:]:
+            for other_index, other_event in enumerate(self.events[index + 1:]):
+                other_index += index + 1
 
-                # for every variable in the event
-                for variable, value in event.items():
+                # get the different variables
+                different_variables = event.get_variables_where_assignment_is_different(other_event)
 
-                    # if the events match in this dimension
-                    if other_event[variable] == value:
+                # if they are the same event
+                if len(different_variables) == 0:
+                    # recurse into the simpler complex event
+                    result = ComplexEvent([])
+                    result.events.extend([event_ for index_, event_ in enumerate(self.events)
+                                          if index_ != other_index])
+                    return result.simplify()
 
-                        # form the simpler union of the two events
-                        unified_event = Event({variable: value})
-                        for variable_ in event.keys():
-                            if variable_ != variable:
-                                unified_event[variable_] = variable.union_of_assignments(event[variable_],
-                                                                                         other_event[variable_])
-                        # recurse into the simpler complex event
-                        result = ComplexEvent([])
-                        result.events.append(unified_event)
-                        result.events.extend([event__ for event__ in self.events if event__ != event
-                                              and event__ != other_event])
-                        return result.simplify()
+                # if they differ in only one dimension
+                if len(different_variables) == 1:
+                    mismatching_variable = different_variables[0]
+
+                    unified_event = event.__copy__()
+                    unified_event[mismatching_variable] = (mismatching_variable.
+                                                           union_of_assignments(event[mismatching_variable],
+                                                                                other_event[mismatching_variable]))
+
+                    # recurse into the simpler complex event
+                    result = ComplexEvent([])
+                    result.events.append(unified_event)
+                    result.events.extend([event_ for index_, event_ in enumerate(self.events)
+                                          if index_ not in [index, other_index]])
+                    return result.simplify()
 
         # if no simplification is possible, return the current complex event
         return self.__copy__()
@@ -640,7 +658,7 @@ class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
         if isinstance(other, Event):
             return self.intersection(ComplexEvent([other]))
         intersections = [event.intersection(other_event) for other_event in other.events for event in self.events]
-        return ComplexEvent(intersections)
+        return ComplexEvent(intersections).simplify()
 
     def difference(self, other: EventType) -> Self:
         if isinstance(other, Event):
@@ -652,7 +670,7 @@ class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
         for event in self.events[1:]:
             current_complement = event.complement()
             result = result.intersection(current_complement)
-        return result.make_events_disjoint() #  .simplify()
+        return result.make_events_disjoint().simplify()
 
     def are_events_disjoint(self) -> bool:
         """

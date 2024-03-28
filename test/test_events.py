@@ -290,9 +290,7 @@ class ComplexEventTestCase(unittest.TestCase):
         complex_event_1 = event_1.union(event_2)
         event_3 = Event({self.x: portion.closed(0.5, 2), self.y: portion.closed(-0.5, 2)})
         complex_event_2 = event_1.union(event_3)
-
         result = complex_event_1.union(complex_event_2)
-
         self.assertIsInstance(result, ComplexEvent)
         self.assertTrue(result.are_events_disjoint())
 
@@ -430,6 +428,18 @@ class ComplexEventTestCase(unittest.TestCase):
         event_ = result.events[0]
         self.assertEqual(event_[self.x], portion.closed(0, 1))
         self.assertEqual(event_[self.a], (0, ))
+
+    def test_no_simplify_high_dimensions(self):
+        x = Continuous("x")
+        y = Continuous("y")
+        z = Continuous("z")
+
+        event_1 = Event({x: portion.closed(0, 1), y: portion.closed(0, 1), z: portion.closed(0, 1)})
+        event_2 = Event({x: portion.closed(0, 1), y: portion.closed(0.5, 1.5), z: portion.closed(0.5, 1.5)})
+        complex_event = ComplexEvent([event_1, event_2])
+        simplified = complex_event.simplify()
+        self.assertEqual(len(simplified.events), 2)
+
 
 
 class PlottingTestCase(unittest.TestCase):
