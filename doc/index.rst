@@ -99,6 +99,7 @@ Examples
    examples/example
    examples/product_spaces
    examples/logo_generation
+   examples/self_assessment
 
 .. toctree::
    :maxdepth: 2

@@ -40,21 +40,33 @@ release = ''
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
     'autoapi.extension',
+    'sphinxcontrib.bibtex',
     'nbsphinx',
     'sphinx_gallery.load_style',
+    "myst_nb"
+]
+
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_image",
 ]
 
 # ----------- autoapi setup -------------
 autoapi_dirs = ['../src']
 
 inheritance_graph_attrs = dict(rankdir="TB",)
+myst_dmath_double_inline = True
 
+# -- Bibliography configuration ----------------------------------------------
+bibtex_bibfiles = ['references.bib']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']

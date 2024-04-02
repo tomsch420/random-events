@@ -1,4 +1,9 @@
+-r ../requirements.txt
 sphinx_rtd_theme
 sphinx-autoapi
+sphinxcontrib-bibtex
 nbsphinx
-sphinx_gallery
+sphinx-gallery
+myst-nb
+random-events
+pillow
