@@ -7,3 +7,4 @@ sphinx-gallery
 myst-nb
 random-events
 pillow
+jupyterquiz==2.7.0a4
