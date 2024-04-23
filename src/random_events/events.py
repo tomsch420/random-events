@@ -462,6 +462,12 @@ class Event(SupportsSetOperations, EventMapType, SubclassJSONSerializer):
         """
         return [variable for variable in self.keys() if self[variable] != other[variable]]
 
+    def to_typst(self) -> str:
+        """
+        Convert the event to a typst string.
+        """
+        return " times ".join(f"{variable.name}_({variable.assignment_to_typst(value)})" for variable, value in
+                              self.items())
 
 
 class EncodedEvent(Event):
@@ -769,6 +775,12 @@ class ComplexEvent(SupportsSetOperations, SubclassJSONSerializer):
     def _from_json(cls, data: Dict[str, Any]) -> Self:
         events = [Event.from_json(event) for event in data["events"]]
         return cls(events)
+
+    def to_typst(self) -> str:
+        """
+        Convert the event to a typst string.
+        """
+        return " union ".join(f"({event.to_typst()})" for event in self.events)
 
 
 EventType = Union[Event, EncodedEvent, ComplexEvent]

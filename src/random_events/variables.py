@@ -155,6 +155,12 @@ class Variable(utils.SubclassJSONSerializer):
     def encoded_domain(self):
         return self.encode_many(self.domain)
 
+    def assignment_to_typst(self, assignment: AssignmentType) -> str:
+        """
+        Convert an assignment to typst string.
+        """
+        raise NotImplementedError
+
 
 class Continuous(Variable):
     """
@@ -194,6 +200,9 @@ class Continuous(Variable):
 
     def assignment_from_json(self, data: Any) -> portion.Interval:
         return portion.from_data(data)
+
+    def assignment_to_typst(self, assignment: AssignmentType) -> str:
+        return " union ".join([interval.__str__() for interval in assignment])
 
 
 class Discrete(Variable):
@@ -265,6 +274,9 @@ class Discrete(Variable):
 
     def assignment_from_json(self, data: Any) -> AssignmentType:
         return tuple(data)
+
+    def assignment_to_typst(self, assignment: AssignmentType) -> str:
+        return "{" + ", ".join([str(element) for element in assignment]) + "}"
 
 
 class Symbolic(Discrete):
