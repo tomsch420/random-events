@@ -1,4 +1,6 @@
-portion
-numpy
-plotly
+portion~=2.4.2
+numpy~=1.26.1
+plotly~=5.20.0
 typing_extensions
+
+sortedcontainers~=2.4.0
