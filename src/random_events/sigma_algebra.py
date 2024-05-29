@@ -163,16 +163,25 @@ class AbstractCompositeSet:
         [result.add_simple_set(simple_set.intersection_with(other)) for simple_set in self.simple_sets]
         return result
 
+    def intersection_with_simple_sets(self, other: SortedSet[AbstractSimpleSet]) -> Self:
+        """
+        Form the intersection of this object with a set of simple sets.
+
+        :param other: The set of simple sets
+        :return: The intersection of this set with the set of simple sets
+        """
+        result = self.new_empty_set()
+        [result.simple_sets.update(self.intersection_with_simple_set(other_simple_set).simple_sets)
+         for other_simple_set in other]
+        return result
+
     def intersection_with(self, other: Self) -> Self:
         """
         Form the intersection of this object with another object.
         :param other: The other set
         :return: The intersection of this set with the other set
         """
-        result = self.new_empty_set()
-        [result.simple_sets.update(self.intersection_with_simple_set(other_simple_set).simple_sets)
-         for other_simple_set in other.simple_sets]
-        return result
+        return self.intersection_with_simple_sets(other.simple_sets)
 
     def __and__(self, other):
         return self.intersection_with(other)
@@ -187,12 +196,7 @@ class AbstractCompositeSet:
         [result.simple_sets.update(simple_set.difference_with(other)) for simple_set in self.simple_sets]
         return result.make_disjoint()
 
-    def difference_with(self, other: Self) -> Self:
-        """
-        Form the difference with another composite set.
-        :param other: The other set
-        :return: The difference of this set with the other set
-        """
+    def difference_with_simple_sets(self, other: SortedSet[AbstractSimpleSet]) -> Self:
 
         # initialize the result
         result = self.new_empty_set()
@@ -205,7 +209,7 @@ class AbstractCompositeSet:
             first_iteration = True
 
             # for every simple set in the other set
-            for other_simple_set in other.simple_sets:
+            for other_simple_set in other:
 
                 # form the element wise difference
                 difference_with_other_simple_set = own_simple_set.difference_with(other_simple_set)
@@ -227,6 +231,14 @@ class AbstractCompositeSet:
 
         return result.make_disjoint()
 
+    def difference_with(self, other: Self) -> Self:
+        """
+        Form the difference with another composite set.
+        :param other: The other set
+        :return: The difference of this set with the other set
+        """
+        return self.difference_with_simple_sets(other.simple_sets)
+
     def __sub__(self, other):
         return self.difference_with(other)
 
@@ -234,15 +246,22 @@ class AbstractCompositeSet:
         """
         :return: The complement of this set
         """
+
+        if self.is_empty():
+            return self.complement_if_empty()
+
         result = self.new_empty_set()
-        first_iteration = True
-        for simple_set in self.simple_sets:
-            if first_iteration:
-                result = simple_set.complement()
-                first_iteration = False
-            else:
-                result = result.intersection_with(simple_set.complement())
+        result.simple_sets = self.simple_sets[0].complement()
+        for simple_set in self.simple_sets[1:]:
+            result = result.intersection_with_simple_sets(simple_set.complement())
         return result.make_disjoint()
+
+    @abstractmethod
+    def complement_if_empty(self) -> Self:
+        """
+        :return: The complement of this if it is empty.
+        """
+        raise NotImplementedError
 
     def __invert__(self):
         return self.complement()

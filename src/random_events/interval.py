@@ -177,3 +177,6 @@ class Interval(sigma_algebra.AbstractCompositeSet):
 
     def new_empty_set(self) -> Self:
         return Interval()
+
+    def complement_if_empty(self) -> Self:
+        return Interval([SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN)])
