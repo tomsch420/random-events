@@ -2,6 +2,8 @@ from random_events.set import SetElement, Set
 import enum
 import unittest
 
+from random_events.sigma_algebra import AbstractSimpleSet
+
 
 class TestEnum(SetElement):
     EMPTY_SET = 0
@@ -38,6 +40,11 @@ class SetElementTestCase(unittest.TestCase):
         self.assertFalse(a.contains(TestEnum.B))
         self.assertFalse(a.contains(TestEnum.C))
 
+    def test_to_json(self):
+        a = TestEnum.A
+        b = AbstractSimpleSet.from_json(a.to_json())
+        self.assertEqual(a, b)
+
 
 class SetTestCase(unittest.TestCase):
 
@@ -57,6 +64,21 @@ class SetTestCase(unittest.TestCase):
     def test_complement(self):
         s = Set([TestEnum.A, TestEnum.B])
         self.assertEqual(s.complement(), Set([TestEnum.C]))
+
+    def test_to_json(self):
+        s = Set([TestEnum.A, TestEnum.B])
+        s_ = AbstractSimpleSet.from_json(s.to_json())
+        self.assertEqual(s, s_)
+
+    def test_to_json_with_dynamic_enum(self):
+        enum_ = SetElement("Foo", "A B C")
+        s = Set([enum_.A, enum_.B])
+        s_ = s.to_json()
+        del enum_
+        s_ = AbstractSimpleSet.from_json(s_)
+        self.assertEqual(s, s_)
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from typing_extensions import Dict, Any, Self
 
 
@@ -30,6 +32,7 @@ class SubclassJSONSerializer:
         return {"type": get_full_class_name(self.__class__)}
 
     @classmethod
+    @abstractmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
         """
         Create a variable from a json dict.

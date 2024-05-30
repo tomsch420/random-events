@@ -1,6 +1,7 @@
 import unittest
 
 from random_events.interval import *
+from random_events.sigma_algebra import AbstractSimpleSet
 
 
 class SimpleIntervalTestCase(unittest.TestCase):
@@ -42,6 +43,12 @@ class SimpleIntervalTestCase(unittest.TestCase):
         self.assertFalse(a.contains(-1))
         self.assertFalse(a.contains(1.1))
 
+    def test_to_json(self):
+        a = SimpleInterval(0, 1)
+        b = AbstractSimpleSet.from_json(a.to_json())
+        self.assertIsInstance(b, SimpleInterval)
+        self.assertEqual(a, b)
+
 
 class IntervalTestCase(unittest.TestCase):
 
@@ -67,6 +74,13 @@ class IntervalTestCase(unittest.TestCase):
         union_a_d_b_c_ = Interval([SimpleInterval(0, 2), SimpleInterval(3, 4)])
         self.assertEqual(union_a_d_b_c, union_a_d_b_c_)
         self.assertTrue(union_a_d_b_c.is_disjoint())
+
+    def test_to_json(self):
+        a = SimpleInterval(0, 1)
+        b = Interval([a])
+        c = AbstractSimpleSet.from_json(b.to_json())
+        self.assertIsInstance(c, Interval)
+        self.assertEqual(b, c)
 
 
 if __name__ == '__main__':

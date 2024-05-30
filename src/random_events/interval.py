@@ -1,6 +1,6 @@
 import enum
 from dataclasses import dataclass
-from typing import Set
+from typing import Dict, Any
 
 from sortedcontainers import SortedSet
 from typing_extensions import Self
@@ -124,7 +124,7 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
 
     def contains(self, item: float) -> bool:
         return (self.lower < item < self.upper or (self.lower == item and self.left == Bound.CLOSED) or (
-                    self.upper == item and self.right == Bound.CLOSED))
+                self.upper == item and self.right == Bound.CLOSED))
 
     def __hash__(self):
         return hash((self.lower, self.upper, self.left, self.right))
@@ -140,9 +140,17 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     def __str__(self):
         return sigma_algebra.AbstractSimpleSet.to_string(self)
 
+    def to_json(self) -> Dict[str, Any]:
+        return {**super().to_json(), 'lower': self.lower, 'upper': self.upper, 'left': self.left.name,
+                'right': self.right.name}
+
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> Self:
+        return cls(data['lower'], data['upper'], Bound[data['left']], Bound[data['right']])
+
+
 
 class Interval(sigma_algebra.AbstractCompositeSet):
-
     simple_sets: SortedSet[SimpleInterval]
 
     def simplify(self) -> Self:
@@ -161,9 +169,9 @@ class Interval(sigma_algebra.AbstractCompositeSet):
             last_simple_interval = result.simple_sets[-1]
 
             # if the borders are connected
-            if (last_simple_interval.upper > current_simple_interval.lower or
-                (last_simple_interval.upper == current_simple_interval.lower and not(
-                 last_simple_interval.right == Bound.OPEN and current_simple_interval.left == Bound.OPEN))):
+            if (last_simple_interval.upper > current_simple_interval.lower or (
+                    last_simple_interval.upper == current_simple_interval.lower and not (
+                    last_simple_interval.right == Bound.OPEN and current_simple_interval.left == Bound.OPEN))):
 
                 # extend the upper bound of the last element
                 last_simple_interval.upper = current_simple_interval.upper

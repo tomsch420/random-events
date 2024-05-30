@@ -1,14 +1,16 @@
 import itertools
 from abc import abstractmethod
-from typing import Tuple
+from typing import Tuple, Dict, Any
 
 from typing_extensions import Self, Set, Iterable, Optional
 from sortedcontainers import SortedSet
 
+from .utils import SubclassJSONSerializer
+
 EMPTY_SET_SYMBOL = "∅"
 
 
-class AbstractSimpleSet:
+class AbstractSimpleSet(SubclassJSONSerializer):
     """
     Abstract class for simple sets.
 
@@ -104,7 +106,7 @@ class AbstractSimpleSet:
         raise NotImplementedError
 
 
-class AbstractCompositeSet:
+class AbstractCompositeSet(SubclassJSONSerializer):
     """
     Abstract class for composite sets.
 
@@ -403,3 +405,20 @@ class AbstractCompositeSet:
 
     def __eq__(self, other: Self):
         return self.simple_sets._list == other.simple_sets._list
+
+    def __hash__(self):
+        return hash(tuple(self.simple_sets))
+
+    def __lt__(self, other: Self):
+        if self.is_empty():
+            return True
+        if other.is_empty():
+            return False
+        return self.simple_sets[0] < other.simple_sets[0]
+
+    def to_json(self) -> Dict[str, Any]:
+        return {**super().to_json(), "simple_sets": [simple_set.to_json() for simple_set in self.simple_sets]}
+
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> Self:
+        return cls([AbstractSimpleSet.from_json(simple_set) for simple_set in data["simple_sets"]])

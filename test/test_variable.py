@@ -1,6 +1,6 @@
 import unittest
 
-from random_events.better_variables import *
+from random_events.variable import *
 from random_events.interval import *
 
 
@@ -12,11 +12,15 @@ class TestEnum(SetElement):
 
 
 class ContinuousTestCase(unittest.TestCase):
+    x = Continuous("x")
 
     def test_creation(self):
-        x = Continuous("x")
-        self.assertEqual(x.name, "x")
-        self.assertEqual(x.domain, Interval([SimpleInterval(-float("inf"), float("inf"))]))
+        self.assertEqual(self.x.name, "x")
+        self.assertEqual(self.x.domain, Interval([SimpleInterval(-float("inf"), float("inf"))]))
+
+    def test_to_json(self):
+        x_ = Variable.from_json(self.x.to_json())
+        self.assertEqual(self.x, x_)
 
 
 class IntegerTestCase(unittest.TestCase):
@@ -33,6 +37,11 @@ class SymbolicTestCase(unittest.TestCase):
         x = Symbolic("x", TestEnum)
         self.assertEqual(x.name, "x")
         self.assertEqual(x.domain, Set([TestEnum.A, TestEnum.B, TestEnum.C]))
+
+    def test_to_json(self):
+        x = Symbolic("x", TestEnum)
+        x_ = Variable.from_json(x.to_json())
+        self.assertEqual(x, x_)
 
 
 if __name__ == '__main__':

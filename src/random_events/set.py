@@ -1,5 +1,6 @@
 import enum
 from abc import abstractmethod
+from typing import Dict, Any
 
 from sortedcontainers import SortedSet
 from typing_extensions import Self
@@ -50,6 +51,13 @@ class SetElement(sigma_algebra.AbstractSimpleSet, enum.Enum):
 
     def __lt__(self, other):
         return self.value < other.value
+
+    def to_json(self) -> Dict[str, Any]:
+        return {**super().to_json(), "value": self.value}
+
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> Self:
+        return cls(data["value"])
 
 
 class Set(sigma_algebra.AbstractCompositeSet):
