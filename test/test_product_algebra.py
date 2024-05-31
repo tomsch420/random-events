@@ -1,11 +1,13 @@
 import unittest
 
 from sortedcontainers import SortedSet
+import plotly.graph_objects as go
 
-from random_events.variable import Continuous, Symbolic
-from random_events.interval import Interval, SimpleInterval
+from random_events.interval import *
 from random_events.product_algebra import SimpleEvent, Event
 from random_events.set import SetElement, Set
+from random_events.sigma_algebra import AbstractSimpleSet
+from random_events.variable import Continuous, Symbolic
 
 
 class TestEnum(SetElement):
@@ -15,9 +17,10 @@ class TestEnum(SetElement):
     C = 4
 
 
-class SimpleEventTestCase(unittest.TestCase):
+class EventTestCase(unittest.TestCase):
     x = Continuous("x")
     y = Continuous("y")
+    z = Continuous("z")
     a = Symbolic("a", TestEnum)
     b = Symbolic("b", TestEnum)
 
@@ -68,6 +71,42 @@ class SimpleEventTestCase(unittest.TestCase):
         result = Event([SimpleEvent({self.a: self.a.domain, self.x: Interval([SimpleInterval(0, 1)]),
                                      self.y: Interval([SimpleInterval(0, 1)])})])
         self.assertEqual(simplified, result)
+
+    def test_to_json(self):
+        event = SimpleEvent({self.a: Set([TestEnum.A, TestEnum.B]), self.x: Interval([SimpleInterval(0, 1)]),
+                             self.y: Interval([SimpleInterval(0, 1)])})
+        event_ = AbstractSimpleSet.from_json(event.to_json())
+        self.assertEqual(event_, event)
+
+    def test_plot_2d(self):
+        event_1 = SimpleEvent({self.x: Interval([SimpleInterval(0, 1)]),
+                               self.y: Interval([SimpleInterval(0, 1)])})
+        event_2 = SimpleEvent({self.x: Interval([SimpleInterval(1, 2)]),
+                               self.y: Interval([SimpleInterval(1, 2)])})
+        event = Event([event_1, event_2])
+        fig = go.Figure(event.plot(), event.plotly_layout())
+        self.assertIsNotNone(fig)
+        # fig.show()
+
+    def test_plot_3d(self):
+        event_1 = SimpleEvent({self.x: Interval([SimpleInterval(0, 1)]),
+                               self.y: Interval([SimpleInterval(0, 1)]),
+                               self.z: Interval([SimpleInterval(0, 1)])})
+        event_2 = SimpleEvent({self.x: Interval([SimpleInterval(1, 2)]),
+                               self.y: Interval([SimpleInterval(1, 2)]),
+                               self.z: Interval([SimpleInterval(1, 2)])})
+        event = Event([event_1, event_2])
+        fig = go.Figure(event.plot(), event.plotly_layout())
+        self.assertIsNotNone(fig)
+        # fig.show()
+
+    def test_union(self):
+        event = Event([SimpleEvent({self.a: Set([TestEnum.A]), self.x: open(-float("inf"), 2)})])
+        second_event = Event([SimpleEvent({self.a: Set([TestEnum.A, TestEnum.B]), self.x: open(1, 4)})])
+        union = event | second_event
+        result = Event([SimpleEvent({self.a: Set([TestEnum.A]), self.x: open(-float("inf"), 2)}),
+                        SimpleEvent({self.a: Set([TestEnum.B]), self.x: open(1, 4)})])
+        self.assertEqual(union, result)
 
 
 if __name__ == '__main__':

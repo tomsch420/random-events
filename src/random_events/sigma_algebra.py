@@ -2,8 +2,8 @@ import itertools
 from abc import abstractmethod
 from typing import Tuple, Dict, Any
 
-from typing_extensions import Self, Set, Iterable, Optional
 from sortedcontainers import SortedSet
+from typing_extensions import Self, Iterable, Optional
 
 from .utils import SubclassJSONSerializer
 
@@ -84,7 +84,6 @@ class AbstractSimpleSet(SubclassJSONSerializer):
             # if it intersects with this set
             intersection = element.intersection_with(self)
             if not intersection.is_empty():
-
                 # add the intersection to the result
                 result.add(intersection)
 
@@ -173,8 +172,8 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         :return: The intersection of this set with the set of simple sets
         """
         result = self.new_empty_set()
-        [result.simple_sets.update(self.intersection_with_simple_set(other_simple_set).simple_sets)
-         for other_simple_set in other]
+        [result.simple_sets.update(self.intersection_with_simple_set(other_simple_set).simple_sets) for other_simple_set
+         in other]
         return result
 
     def intersection_with(self, other: Self) -> Self:
@@ -322,8 +321,8 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
         This method requires:
             - the intersection of two simple sets as a simple set
-            - the difference of a simple set (A) and another simple set (B) that is completely contained in A (B ⊆ A).
-            The result of that difference has to be a composite set with only one simple set in it.
+            - the difference_of_a_with_every_b of a simple set (A) and another simple set (B) that is completely contained in A (B ⊆ A).
+            The result of that difference_of_a_with_every_b has to be a composite set with only one simple set in it.
 
         :return: A tuple of the disjoint and non-disjoint set.
         """
@@ -334,43 +333,45 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
         # for every simple set (a)
         for simple_set_a in self.simple_sets:
+            simple_set_a: AbstractSimpleSet
 
             # initialize the difference of a with every b
-            difference = simple_set_a
+            difference_of_a_with_every_b: Optional[AbstractSimpleSet] = simple_set_a
 
             # for every other simple set (b)
             for simple_set_b in self.simple_sets:
+                simple_set_b: AbstractSimpleSet
 
                 # skip symmetric iterations
                 if simple_set_a == simple_set_b:
                     continue
 
                 # get the intersection of a and b
-                intersection = simple_set_a.intersection_with(simple_set_b)
+                intersection_a_b: AbstractSimpleSet = simple_set_a.intersection_with(simple_set_b)
 
                 # if the intersection is not empty add it to the non-disjoint set
-                non_disjoint.add_simple_set(intersection)
+                non_disjoint.add_simple_set(intersection_a_b)
 
                 # get the difference of the simple set with the intersection.
-                difference_with_intersection = difference.difference_with(intersection)
+                difference_with_intersection = difference_of_a_with_every_b.difference_with(intersection_a_b)
 
-                # if the difference is empty
+                # if the difference of a with every b is empty
                 if len(difference_with_intersection) == 0:
                     # skip the rest of the loop and mark the set for discarding
-                    difference = None
+                    difference_of_a_with_every_b = None
                     continue
 
                 # the now should contain only 1 element
-                assert len(difference_with_intersection) == 1
-                difference = difference_with_intersection[0]
+                # assert len(difference_with_intersection) == 1
+                difference_of_a_with_every_b = difference_of_a_with_every_b.difference_with(intersection_a_b)[0]
 
-            # if the difference has become None
-            if difference is None:
+            # if the difference_of_a_with_every_b has become None
+            if difference_of_a_with_every_b is None:
                 # skip the rest of the loop
                 continue
 
             # append the simple_set_a without every other simple set to the disjoint set
-            disjoint.simple_sets.add(difference)
+            disjoint.simple_sets.add(difference_of_a_with_every_b)
 
         return disjoint, non_disjoint
 
@@ -410,11 +411,25 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         return hash(tuple(self.simple_sets))
 
     def __lt__(self, other: Self):
-        if self.is_empty():
-            return True
-        if other.is_empty():
-            return False
-        return self.simple_sets[0] < other.simple_sets[0]
+        """
+        Compare this set with another set.
+
+        The sets are compared by comparing the simple sets in order.
+        If the pair of simple sets are equal, the next pair is compared.
+        If all pairs are equal, the set with the least amount of simple sets is considered smaller.
+
+        ..note:: This does not define a total order in the mathematical sense. In the mathematical sense, this defines
+            a partial order.
+
+        :param other: The other set
+        :return: Rather this set is smaller than the other set
+        """
+        for a, b in zip(self.simple_sets, other.simple_sets):
+            if a == b:
+                continue
+            else:
+                return a < b
+        return len(self.simple_sets) < len(other.simple_sets)
 
     def to_json(self) -> Dict[str, Any]:
         return {**super().to_json(), "simple_sets": [simple_set.to_json() for simple_set in self.simple_sets]}

@@ -148,6 +148,11 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     def _from_json(cls, data: Dict[str, Any]) -> Self:
         return cls(data['lower'], data['upper'], Bound[data['left']], Bound[data['right']])
 
+    def center(self) -> float:
+        """
+        :return: The center point of the interval
+        """
+        return ((self.lower + self.upper) / 2) + self.lower
 
 
 class Interval(sigma_algebra.AbstractCompositeSet):
@@ -188,3 +193,60 @@ class Interval(sigma_algebra.AbstractCompositeSet):
 
     def complement_if_empty(self) -> Self:
         return Interval([SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN)])
+
+
+def open(left: float, right: float) -> Interval:
+    """
+    Creates an open interval.
+    :param left: The left bound of the interval.
+    :param right: The right bound of the interval.
+    :return: The open interval.
+    """
+    return Interval([SimpleInterval(left, right, Bound.OPEN, Bound.OPEN)])
+
+
+def closed(left: float, right: float) -> Interval:
+    """
+    Creates a closed interval.
+    :param left: The left bound of the interval.
+    :param right: The right bound of the interval.
+    :return: The closed interval.
+    """
+    return Interval([SimpleInterval(left, right, Bound.CLOSED, Bound.CLOSED)])
+
+
+def open_closed(left: float, right: float) -> Interval:
+    """
+    Creates an open-closed interval.
+    :param left: The left bound of the interval.
+    :param right: The right bound of the interval.
+    :return: The open-closed interval.
+    """
+    return Interval([SimpleInterval(left, right, Bound.OPEN, Bound.CLOSED)])
+
+
+def closed_open(left: float, right: float) -> Interval:
+    """
+    Creates a closed-open interval.
+    :param left: The left bound of the interval.
+    :param right: The right bound of the interval.
+    :return: The closed-open interval.
+    """
+    return Interval([SimpleInterval(left, right, Bound.CLOSED, Bound.OPEN)])
+
+
+def singleton(value: float) -> Interval:
+    """
+    Creates a singleton interval.
+    :param value: The value of the interval.
+    :return: The singleton interval.
+    """
+    return Interval([SimpleInterval(value, value, Bound.CLOSED, Bound.CLOSED)])
+
+
+def reals() -> Interval:
+    """
+    Creates the set of real numbers.
+    :return: The set of real numbers.
+    """
+    return Interval([SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN)])

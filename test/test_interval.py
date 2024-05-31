@@ -82,6 +82,12 @@ class IntervalTestCase(unittest.TestCase):
         self.assertIsInstance(c, Interval)
         self.assertEqual(b, c)
 
+    def test_alessandros_order_complaint(self):
+        a = open(2, 4) | open(5, 6)
+        b = open(3, 4) | open(4.5, 5.5)
+        self.assertTrue(a < b)
+        self.assertFalse(b < a)
+
 
 if __name__ == '__main__':
     unittest.main()
