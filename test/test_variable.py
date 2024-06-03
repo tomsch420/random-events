@@ -16,7 +16,7 @@ class ContinuousTestCase(unittest.TestCase):
 
     def test_creation(self):
         self.assertEqual(self.x.name, "x")
-        self.assertEqual(self.x.domain, Interval([SimpleInterval(-float("inf"), float("inf"))]))
+        self.assertEqual(self.x.domain, reals())
 
     def test_to_json(self):
         x_ = Variable.from_json(self.x.to_json())
@@ -28,7 +28,7 @@ class IntegerTestCase(unittest.TestCase):
     def test_creation(self):
         x = Integer("x")
         self.assertEqual(x.name, "x")
-        self.assertEqual(x.domain, Interval([SimpleInterval(-float("inf"), float("inf"))]))
+        self.assertEqual(x.domain, reals())
 
 
 class SymbolicTestCase(unittest.TestCase):
@@ -36,7 +36,7 @@ class SymbolicTestCase(unittest.TestCase):
     def test_creation(self):
         x = Symbolic("x", TestEnum)
         self.assertEqual(x.name, "x")
-        self.assertEqual(x.domain, Set([TestEnum.A, TestEnum.B, TestEnum.C]))
+        self.assertEqual(x.domain, Set(TestEnum.A, TestEnum.B, TestEnum.C))
 
     def test_to_json(self):
         x = Symbolic("x", TestEnum)

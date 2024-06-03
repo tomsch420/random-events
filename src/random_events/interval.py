@@ -1,3 +1,4 @@
+from __future__ import annotations
 import enum
 from dataclasses import dataclass
 from typing import Dict, Any
@@ -6,6 +7,7 @@ from sortedcontainers import SortedSet
 from typing_extensions import Self
 
 from . import sigma_algebra
+from .sigma_algebra import AbstractCompositeSet
 
 
 class Bound(enum.Enum):
@@ -61,6 +63,9 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     """
     The bound type of the upper bound.
     """
+
+    def as_composite_set(self) -> Interval:
+        return Interval(self)
 
     def __lt__(self, other: Self):
         if self.lower == other.lower:
@@ -165,7 +170,7 @@ class Interval(sigma_algebra.AbstractCompositeSet):
             return self
 
         # initialize the result
-        result = Interval([self.simple_sets[0]])
+        result = self.simple_sets[0].as_composite_set()
 
         # iterate over the simple sets
         for current_simple_interval in self.simple_sets[1:]:
@@ -195,6 +200,10 @@ class Interval(sigma_algebra.AbstractCompositeSet):
         return Interval([SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN)])
 
 
+# Type definitions
+
+
+
 def open(left: float, right: float) -> Interval:
     """
     Creates an open interval.
@@ -202,7 +211,7 @@ def open(left: float, right: float) -> Interval:
     :param right: The right bound of the interval.
     :return: The open interval.
     """
-    return Interval([SimpleInterval(left, right, Bound.OPEN, Bound.OPEN)])
+    return SimpleInterval(left, right, Bound.OPEN, Bound.OPEN).as_composite_set()
 
 
 def closed(left: float, right: float) -> Interval:
@@ -212,7 +221,7 @@ def closed(left: float, right: float) -> Interval:
     :param right: The right bound of the interval.
     :return: The closed interval.
     """
-    return Interval([SimpleInterval(left, right, Bound.CLOSED, Bound.CLOSED)])
+    return SimpleInterval(left, right, Bound.CLOSED, Bound.CLOSED).as_composite_set()
 
 
 def open_closed(left: float, right: float) -> Interval:
@@ -222,7 +231,7 @@ def open_closed(left: float, right: float) -> Interval:
     :param right: The right bound of the interval.
     :return: The open-closed interval.
     """
-    return Interval([SimpleInterval(left, right, Bound.OPEN, Bound.CLOSED)])
+    return SimpleInterval(left, right, Bound.OPEN, Bound.CLOSED).as_composite_set()
 
 
 def closed_open(left: float, right: float) -> Interval:
@@ -232,7 +241,7 @@ def closed_open(left: float, right: float) -> Interval:
     :param right: The right bound of the interval.
     :return: The closed-open interval.
     """
-    return Interval([SimpleInterval(left, right, Bound.CLOSED, Bound.OPEN)])
+    return SimpleInterval(left, right, Bound.CLOSED, Bound.OPEN).as_composite_set()
 
 
 def singleton(value: float) -> Interval:
@@ -241,7 +250,7 @@ def singleton(value: float) -> Interval:
     :param value: The value of the interval.
     :return: The singleton interval.
     """
-    return Interval([SimpleInterval(value, value, Bound.CLOSED, Bound.CLOSED)])
+    return SimpleInterval(value, value, Bound.CLOSED, Bound.CLOSED).as_composite_set()
 
 
 def reals() -> Interval:
@@ -249,4 +258,4 @@ def reals() -> Interval:
     Creates the set of real numbers.
     :return: The set of real numbers.
     """
-    return Interval([SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN)])
+    return SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN).as_composite_set()

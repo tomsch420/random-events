@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import itertools
 from abc import abstractmethod
 from typing import Tuple, Dict, Any
 
 from sortedcontainers import SortedSet
-from typing_extensions import Self, Iterable, Optional
+from typing_extensions import Self, Iterable, Optional, TYPE_CHECKING
 
 from .utils import SubclassJSONSerializer
 
@@ -28,7 +30,7 @@ class AbstractSimpleSet(SubclassJSONSerializer):
         raise NotImplementedError
 
     @abstractmethod
-    def complement(self) -> SortedSet[Self]:
+    def complement(self) -> SimpleSetContainer:
         """
         :return: The complement of this set as disjoint set of simple sets.
         """
@@ -60,7 +62,7 @@ class AbstractSimpleSet(SubclassJSONSerializer):
         """
         raise NotImplementedError
 
-    def difference_with(self, other: Self) -> SortedSet[Self]:
+    def difference_with(self, other: Self) -> SimpleSetContainer:
         """
         Form the difference of this object with another object.
 
@@ -104,6 +106,14 @@ class AbstractSimpleSet(SubclassJSONSerializer):
     def __lt__(self, other):
         raise NotImplementedError
 
+    @abstractmethod
+    def as_composite_set(self) -> AbstractCompositeSet:
+        """
+        Convert this simple set to a composite set.
+        :return: The composite set
+        """
+        raise NotImplementedError
+
 
 class AbstractCompositeSet(SubclassJSONSerializer):
     """
@@ -112,9 +122,9 @@ class AbstractCompositeSet(SubclassJSONSerializer):
     AbstractCompositeSet is a set that is composed of a disjoint union of simple sets.
     """
 
-    simple_sets: SortedSet[AbstractSimpleSet]
+    simple_sets: SimpleSetContainer
 
-    def __init__(self, simple_sets: Optional[Iterable[AbstractSimpleSet]] = None):
+    def __init__(self, *simple_sets):
         self.simple_sets = SortedSet(simple_sets)
 
     @abstractmethod
@@ -164,7 +174,7 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         [result.add_simple_set(simple_set.intersection_with(other)) for simple_set in self.simple_sets]
         return result
 
-    def intersection_with_simple_sets(self, other: SortedSet[AbstractSimpleSet]) -> Self:
+    def intersection_with_simple_sets(self, other: SimpleSetContainer) -> Self:
         """
         Form the intersection of this object with a set of simple sets.
 
@@ -197,7 +207,7 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         [result.simple_sets.update(simple_set.difference_with(other)) for simple_set in self.simple_sets]
         return result.make_disjoint()
 
-    def difference_with_simple_sets(self, other: SortedSet[AbstractSimpleSet]) -> Self:
+    def difference_with_simple_sets(self, other: SimpleSetContainer) -> Self:
 
         # initialize the result
         result = self.new_empty_set()
@@ -336,7 +346,8 @@ class AbstractCompositeSet(SubclassJSONSerializer):
             simple_set_a: AbstractSimpleSet
 
             # initialize the difference of a with every b
-            difference_of_a_with_every_b: Optional[AbstractSimpleSet] = simple_set_a
+            difference_of_a_with_every_b: Optional[AbstractCompositeSet] = self.new_empty_set()
+            difference_of_a_with_every_b.add_simple_set(simple_set_a)
 
             # for every other simple set (b)
             for simple_set_b in self.simple_sets:
@@ -353,17 +364,16 @@ class AbstractCompositeSet(SubclassJSONSerializer):
                 non_disjoint.add_simple_set(intersection_a_b)
 
                 # get the difference of the simple set with the intersection.
-                difference_with_intersection = difference_of_a_with_every_b.difference_with(intersection_a_b)
+                difference_with_intersection = difference_of_a_with_every_b.difference_with_simple_set(intersection_a_b)
 
                 # if the difference of a with every b is empty
-                if len(difference_with_intersection) == 0:
+                if len(difference_with_intersection.simple_sets) == 0:
                     # skip the rest of the loop and mark the set for discarding
                     difference_of_a_with_every_b = None
                     continue
 
-                # the now should contain only 1 element
-                # assert len(difference_with_intersection) == 1
-                difference_of_a_with_every_b = difference_of_a_with_every_b.difference_with(intersection_a_b)[0]
+                # add the disjoint remainder
+                difference_of_a_with_every_b = difference_with_intersection
 
             # if the difference_of_a_with_every_b has become None
             if difference_of_a_with_every_b is None:
@@ -371,7 +381,7 @@ class AbstractCompositeSet(SubclassJSONSerializer):
                 continue
 
             # append the simple_set_a without every other simple set to the disjoint set
-            disjoint.simple_sets.add(difference_of_a_with_every_b)
+            disjoint.simple_sets.update(difference_of_a_with_every_b.simple_sets)
 
         return disjoint, non_disjoint
 
@@ -410,6 +420,9 @@ class AbstractCompositeSet(SubclassJSONSerializer):
     def __hash__(self):
         return hash(tuple(self.simple_sets))
 
+    def __iter__(self):
+        return iter(self.simple_sets)
+
     def __lt__(self, other: Self):
         """
         Compare this set with another set.
@@ -436,4 +449,11 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
-        return cls([AbstractSimpleSet.from_json(simple_set) for simple_set in data["simple_sets"]])
+        return cls(*[AbstractSimpleSet.from_json(simple_set) for simple_set in data["simple_sets"]])
+
+
+# Type definitions
+if TYPE_CHECKING:
+    SimpleSetContainer = SortedSet[AbstractSimpleSet]
+else:
+    SimpleSetContainer = SortedSet

@@ -1,14 +1,13 @@
+from __future__ import annotations
 import enum
-from abc import abstractmethod
-from typing import Dict, Any
 
 from sortedcontainers import SortedSet
-from typing_extensions import Self
+from typing_extensions import Self, TYPE_CHECKING, Dict, Any
 
-from . import sigma_algebra
+from .sigma_algebra import *
 
 
-class SetElement(sigma_algebra.AbstractSimpleSet, enum.Enum):
+class SetElement(AbstractSimpleSet, enum.Enum):
     """
     Base class for enums that are used as elements in a set.
 
@@ -18,7 +17,7 @@ class SetElement(sigma_algebra.AbstractSimpleSet, enum.Enum):
     @property
     @abstractmethod
     def EMPTY_SET(self):
-        raise NotImplementedError
+        raise NotImplementedError("The EMPTY_SET attribute has to be defined.")
 
     @property
     def all_elements(self):
@@ -30,7 +29,7 @@ class SetElement(sigma_algebra.AbstractSimpleSet, enum.Enum):
         else:
             return self.all_elements.EMPTY_SET
 
-    def complement(self) -> SortedSet[Self]:
+    def complement(self) -> SimpleSetContainer:
         result = SortedSet()
         for element in self.all_elements:
             if element != self and element != self.all_elements.EMPTY_SET:
@@ -38,7 +37,7 @@ class SetElement(sigma_algebra.AbstractSimpleSet, enum.Enum):
         return result
 
     def is_empty(self) -> bool:
-        return self is self.all_elements.EMPTY_SET
+        return self == self.EMPTY_SET
 
     def contains(self, item: Self) -> bool:
         return self == item
@@ -59,10 +58,12 @@ class SetElement(sigma_algebra.AbstractSimpleSet, enum.Enum):
     def _from_json(cls, data: Dict[str, Any]) -> Self:
         return cls(data["value"])
 
+    def as_composite_set(self) -> AbstractCompositeSet:
+        return Set(self)
 
-class Set(sigma_algebra.AbstractCompositeSet):
 
-    simple_sets: SortedSet[SetElement]
+class Set(AbstractCompositeSet):
+    simple_sets: SetElementContainer
 
     def complement_if_empty(self) -> Self:
         raise NotImplementedError("I don't know how to do this yet.")
@@ -71,4 +72,14 @@ class Set(sigma_algebra.AbstractCompositeSet):
         return self
 
     def new_empty_set(self) -> Self:
-        return Set([])
+        return Set()
+
+    def make_disjoint(self) -> Self:
+        return self
+
+
+# Type definitions
+if TYPE_CHECKING:
+    SetElementContainer = SortedSet[SetElement]
+else:
+    SetElementContainer = SortedSet

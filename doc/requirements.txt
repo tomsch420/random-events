@@ -1,10 +1,8 @@
--r ../requirements.txt
+ -r ../requirements-dev.txt
 sphinx_rtd_theme
 sphinx-autoapi
 sphinxcontrib-bibtex
 nbsphinx
-sphinx-gallery
 myst-nb
+sphinx-gallery
 random-events
-pillow
-jupyterquiz==2.7.0a4

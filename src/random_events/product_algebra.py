@@ -1,6 +1,7 @@
+from __future__ import annotations
 import numpy as np
 from sortedcontainers import SortedDict, SortedKeysView, SortedValuesView
-from typing_extensions import List
+from typing_extensions import List, TYPE_CHECKING
 import plotly.graph_objects as go
 
 from .sigma_algebra import *
@@ -8,7 +9,14 @@ from .variable import *
 from .variable import Variable
 
 
-class VariableMap(SortedDict[Variable, Any]):
+# Type definitions
+if TYPE_CHECKING:
+    VariableMapSuperClassType = SortedDict[Variable, Any]
+else:
+    VariableMapSuperClassType = SortedDict
+
+
+class VariableMap(VariableMapSuperClassType):
     """
     A map of variables to values.
 
@@ -48,15 +56,24 @@ class VariableMap(SortedDict[Variable, Any]):
         return self.__class__({variable: value for variable, value in self.items()})
 
 
-class SimpleEvent(AbstractSimpleSet, VariableMap[Variable, AbstractCompositeSet]):
+class SimpleEvent(AbstractSimpleSet, VariableMap):
     """
     A simple event is a set of assignments of variables to values.
 
     A simple event is logically equivalent to a conjunction of assignments.
     """
 
+    def __init__(self, *args, **kwargs):
+        VariableMap.__init__(self, *args, **kwargs)
+        for key, value in self.items():
+            self[key] = value
+
+
+    def as_composite_set(self) -> Event:
+        return Event(self)
+
     @property
-    def assignments(self) -> SortedValuesView[AbstractCompositeSet]:
+    def assignments(self) -> SortedValuesView:
         return self.values()
 
     def intersection_with(self, other: Self) -> Self:
@@ -72,7 +89,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap[Variable, AbstractCompositeSet]
 
         return result
 
-    def complement(self) -> SortedSet[Self]:
+    def complement(self) -> SimpleSetContainer:
 
         # initialize result
         result = SortedSet()
@@ -114,7 +131,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap[Variable, AbstractCompositeSet]
         return result
 
     def is_empty(self) -> bool:
-        if len(self) == 0:
+        if len(self.keys()) == 0:
             return True
 
         for assignment in self.values():
@@ -132,11 +149,22 @@ class SimpleEvent(AbstractSimpleSet, VariableMap[Variable, AbstractCompositeSet]
     def __hash__(self):
         return hash(tuple(self.items()))
 
+    def __setitem__(self, key: Variable, value: Union[AbstractSimpleSet, AbstractCompositeSet]):
+        if isinstance(value, AbstractSimpleSet):
+            super().__setitem__(key, value.as_composite_set())
+        elif isinstance(value, AbstractCompositeSet):
+            super().__setitem__(key, value)
+        else:
+            raise TypeError(f"Value must be a SimpleSet or CompositeSet, got {type(value)} instead.")
+
     def __lt__(self, other: Self):
-        for variable, assignment in self.items():
-            if assignment < other[variable]:
-                return True
-        return False
+        if len(self.variables) < len(other.variables):
+            return True
+        for variable in self.variables:
+            if self[variable] == other[variable]:
+                continue
+            else:
+                return self[variable] < other[variable]
 
     def non_empty_to_string(self) -> str:
         return "{" + ", ".join(f"{variable.name} = {assignment}" for variable, assignment in self.items()) + "}"
@@ -239,7 +267,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap[Variable, AbstractCompositeSet]
 
         return result
 
-    def fill_missing_variables(self, variables: SortedSet[Variable]):
+    def fill_missing_variables(self, variables: VariableSet):
         """
         Fill this with the variables that are not in self but in `variables`.
         The variables are mapped to their domain.
@@ -260,14 +288,14 @@ class Event(AbstractCompositeSet):
 
     """
 
-    simple_sets: SortedSet[SimpleEvent]
+    simple_sets: SimpleEventContainer
 
-    def __init__(self, simple_sets: Iterable[SimpleEvent]):
-        super().__init__(simple_sets)
+    def __init__(self, *simple_sets):
+        super().__init__(*simple_sets)
         self.fill_missing_variables()
 
     @property
-    def all_variables(self) -> SortedSet[Variable]:
+    def all_variables(self) -> VariableSet:
         result = SortedSet()
         return result.union(*[SortedSet(simple_set.variables) for simple_set in self.simple_sets])
 
@@ -329,14 +357,14 @@ class Event(AbstractCompositeSet):
 
             # create a new event with the simplified event and all other events
             result = Event(
-                [simplified_event] + [event for event in self.simple_sets if event != event_a and event != event_b])
+                *([simplified_event] + [event for event in self.simple_sets if event != event_a and event != event_b]))
             return result, True
 
         # if nothing happened, return the original event and False
         return self, False
 
     def new_empty_set(self) -> Self:
-        return Event([])
+        return Event()
 
     def complement_if_empty(self) -> Self:
         raise NotImplementedError("Complement of an empty Event is not yet supported.")
@@ -375,3 +403,14 @@ class Event(AbstractCompositeSet):
         """
         super().add_simple_set(simple_set)
         self.fill_missing_variables()
+
+
+# Type definitions
+if TYPE_CHECKING:
+    SimpleEventContainer = SortedSet[SimpleEvent]
+    EventContainer = SortedSet[Event]
+    VariableSet = SortedSet[Variable]
+else:
+    SimpleEventContainer = SortedSet
+    EventContainer = SortedSet
+    VariableSet = SortedSet

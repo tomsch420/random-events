@@ -57,9 +57,9 @@ class IntervalTestCase(unittest.TestCase):
         b = SimpleInterval(0.5, 1.5)
         c = SimpleInterval(1.5, 2, Bound.CLOSED)
         d = SimpleInterval(3, 4)
-        a_b = Interval([d, a, b, c])
+        a_b = Interval(d, a, b, c)
         a_b_simplified = a_b.simplify()
-        a_b_simplified_ = Interval([SimpleInterval(0, 2), SimpleInterval(3, 4)])
+        a_b_simplified_ = Interval(SimpleInterval(0, 2), SimpleInterval(3, 4))
         self.assertEqual(a_b_simplified, a_b_simplified_)
 
     def test_union(self):
@@ -67,17 +67,17 @@ class IntervalTestCase(unittest.TestCase):
         b = SimpleInterval(0.5, 1.5)
         c = SimpleInterval(1.5, 2, Bound.CLOSED)
         d = SimpleInterval(3, 4)
-        a_d = Interval([a, d])
-        b_c = Interval([b, c])
+        a_d = Interval(a, d)
+        b_c = Interval(b, c)
 
         union_a_d_b_c = a_d.union_with(b_c)
-        union_a_d_b_c_ = Interval([SimpleInterval(0, 2), SimpleInterval(3, 4)])
+        union_a_d_b_c_ = Interval(SimpleInterval(0, 2), SimpleInterval(3, 4))
         self.assertEqual(union_a_d_b_c, union_a_d_b_c_)
         self.assertTrue(union_a_d_b_c.is_disjoint())
 
     def test_to_json(self):
         a = SimpleInterval(0, 1)
-        b = Interval([a])
+        b = Interval(a)
         c = AbstractSimpleSet.from_json(b.to_json())
         self.assertIsInstance(c, Interval)
         self.assertEqual(b, c)

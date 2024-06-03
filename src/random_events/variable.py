@@ -1,6 +1,6 @@
 from typing_extensions import Self, Type, Dict, Any, Union
 
-from .interval import Interval, SimpleInterval
+from .interval import Interval, SimpleInterval, reals
 from .set import Set, SetElement
 from .sigma_algebra import AbstractCompositeSet
 from .utils import SubclassJSONSerializer
@@ -59,7 +59,7 @@ class Continuous(Variable):
     domain: Interval
 
     def __init__(self, name: str, domain=None):
-        super().__init__(name, Interval([SimpleInterval(-float("inf"), float("inf"))]))
+        super().__init__(name, reals())
 
 
 class Symbolic(Variable):
@@ -77,7 +77,7 @@ class Symbolic(Variable):
         :param domain: The enum class that lists all elements of the domain.
         """
         if isinstance(domain, type) and issubclass(domain, SetElement):
-            super().__init__(name, Set([value for value in domain if value != domain.EMPTY_SET]))
+            super().__init__(name, Set(*[value for value in domain if value != domain.EMPTY_SET]))
         else:
             super().__init__(name, domain)
 
@@ -88,7 +88,7 @@ class Integer(Variable):
 
     The domain of an integer variable is the number line.
     """
-    domain: Interval = Interval([SimpleInterval(-float("inf"), float("inf"))])
+    domain: Interval
 
     def __init__(self, name: str, domain=None):
-        super().__init__(name, Interval([SimpleInterval(-float("inf"), float("inf"))]))
+        super().__init__(name, reals())

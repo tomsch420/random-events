@@ -52,27 +52,27 @@ class SetTestCase(unittest.TestCase):
         a = TestEnum.A
         b = TestEnum.B
         c = TestEnum.C
-        s = Set([a, b, c, c])
+        s = Set(a, b, c, c)
         self.assertEqual(len(s.simple_sets), 3)
         self.assertEqual(s.simplify(), s)
 
     def test_difference(self):
-        s = Set([TestEnum.A, TestEnum.B])
-        s_ = Set([TestEnum.A])
-        self.assertEqual(s.difference_with(s_), Set([TestEnum.B]))
+        s = Set(TestEnum.A, TestEnum.B)
+        s_ = Set(TestEnum.A)
+        self.assertEqual(s.difference_with(s_), Set(TestEnum.B))
 
     def test_complement(self):
-        s = Set([TestEnum.A, TestEnum.B])
-        self.assertEqual(s.complement(), Set([TestEnum.C]))
+        s = Set(TestEnum.A, TestEnum.B)
+        self.assertEqual(s.complement(), Set(TestEnum.C))
 
     def test_to_json(self):
-        s = Set([TestEnum.A, TestEnum.B])
+        s = Set(TestEnum.A, TestEnum.B)
         s_ = AbstractSimpleSet.from_json(s.to_json())
         self.assertEqual(s, s_)
 
     def test_to_json_with_dynamic_enum(self):
         enum_ = SetElement("Foo", "A B C")
-        s = Set([enum_.A, enum_.B])
+        s = Set(enum_.A, enum_.B)
         s_ = s.to_json()
         del enum_
         s_ = AbstractSimpleSet.from_json(s_)
