@@ -48,7 +48,7 @@ jobs:
       - name: Setup python 🐍
         uses: actions/setup-python@v4
         with:
-            python-version: 3.8
+            python-version: "3.x"
             cache: pip
             
       # ----------------------------------------------------------------------------------------------------------------
@@ -64,18 +64,3 @@ jobs:
         run: |
           cd test
           PYTHONPATH=../src python -m unittest discover
-
-      # ----------------------------------------------------------------------------------------------------------------
-
-      - name: Install Sphinx dependencies 📚
-        uses: py-actions/py-dependency-install@v4
-        with:
-          path: "doc/requirements.txt"
-
-      # ----------------------------------------------------------------------------------------------------------------
-
-      - name: Build Sphinx documentation 📝
-        working-directory: ./doc
-        run: |
-          sudo apt install pandoc
-          make html
