@@ -76,6 +76,12 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         return self.lower > self.upper or (
                 self.lower == self.upper and (self.left == Bound.OPEN or self.right == Bound.OPEN))
 
+    def is_singleton(self) -> bool:
+        """
+        :return: True if the interval is a singleton (contains only one value), False otherwise.
+        """
+        return self.lower == self.upper and self.left == Bound.CLOSED and self.right == Bound.CLOSED
+
     def intersection_with(self, other: Self) -> Self:
 
         # create new limits for the intersection
@@ -199,9 +205,11 @@ class Interval(sigma_algebra.AbstractCompositeSet):
     def complement_if_empty(self) -> Self:
         return Interval([SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN)])
 
-
-# Type definitions
-
+    def is_singleton(self):
+        """
+        :return: True if the interval is a singleton (contains only one value), False otherwise.
+        """
+        return len(self.simple_sets) == 1 and self.simple_sets[0].is_singleton()
 
 
 def open(left: float, right: float) -> Interval:

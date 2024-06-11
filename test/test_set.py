@@ -6,7 +6,7 @@ from random_events.sigma_algebra import AbstractSimpleSet
 
 
 class TestEnum(SetElement):
-    EMPTY_SET = 0
+    EMPTY_SET = -1
     A = 1
     B = 2
     C = 4

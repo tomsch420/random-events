@@ -7,16 +7,21 @@ from typing_extensions import Self, TYPE_CHECKING, Dict, Any
 from .sigma_algebra import *
 
 
-class SetElement(AbstractSimpleSet, enum.Enum):
+class SetElement(AbstractSimpleSet, int, enum.Enum):
     """
     Base class for enums that are used as elements in a set.
 
     Classes that inherit from this class have to define an attribute called EMPTY_SET.
+    It is advisable to define EMPTY_SET as -1 to correctly work with indices.
+    The empty set of the class is used to access all other elements of the class.
     """
 
     @property
     @abstractmethod
     def EMPTY_SET(self):
+        """
+        :return: The empty set of the class.
+        """
         raise NotImplementedError("The EMPTY_SET attribute has to be defined.")
 
     @property
