@@ -99,6 +99,16 @@ class EventTestCase(unittest.TestCase):
                         SimpleEvent({self.a: TestEnum.B, self.x: open(1, 4)}))
         self.assertEqual(union, result)
 
+    def test_marginal_event(self):
+        event_1 = SimpleEvent({self.x: closed(0, 1), self.y: SimpleInterval(0, 1)})
+        event_2 = SimpleEvent({self.x: closed(1, 2), self.y: Interval(SimpleInterval(3, 4))})
+        event_3 = SimpleEvent({self.x: closed(5, 6), self.y: Interval(SimpleInterval(5, 6))})
+        event = Event(event_1, event_2, event_3)
+        marginal = event.marginal(SortedSet([self.x]))
+        self.assertEqual(marginal, SimpleEvent({self.x: closed(0, 2) | closed(5, 6)}).as_composite_set())
+        fig = go.Figure(marginal.plot())
+        # fig.show()
+
 
 if __name__ == '__main__':
     unittest.main()

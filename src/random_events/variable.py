@@ -81,6 +81,9 @@ class Symbolic(Variable):
         else:
             super().__init__(name, domain)
 
+    def domain_type(self) -> Type[SetElement]:
+        return self.domain.simple_sets[0].all_elements
+
 
 class Integer(Variable):
     """

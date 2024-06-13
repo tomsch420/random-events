@@ -68,7 +68,6 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         for key, value in self.items():
             self[key] = value
 
-
     def as_composite_set(self) -> Event:
         return Event(self)
 
@@ -166,6 +165,18 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
             else:
                 return self[variable] < other[variable]
 
+    def marginal(self, variables: VariableSet) -> SimpleEvent:
+        """
+        Create the marginal event, that only contains the variables given..
+
+        :param variables: The variables to contain in the marginal event
+        :return: The marginal event
+        """
+        result = self.__class__()
+        for variable in variables:
+            result[variable] = self[variable]
+        return result
+
     def non_empty_to_string(self) -> str:
         return "{" + ", ".join(f"{variable.name} = {assignment}" for variable, assignment in self.items()) + "}"
 
@@ -185,12 +196,29 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         """
         assert all(isinstance(variable, Continuous) for variable in self.keys()), \
             "Plotting is only supported for events that consist of only continuous variables."
+        if len(self.keys()) == 1:
+            return self.plot_1d()
         if len(self.keys()) == 2:
             return self.plot_2d()
         elif len(self.keys()) == 3:
             return self.plot_3d()
         else:
             raise NotImplementedError("Plotting is only supported for two and three dimensional events")
+
+    def plot_1d(self) -> List[go.Scatter]:
+        """
+        Plot the event in 1D.
+        """
+        xs = []
+        ys = []
+
+        interval: Interval = list(self.values())[0]
+        for simple_interval in interval.simple_sets:
+            simple_interval: SimpleInterval
+            xs.extend([simple_interval.lower, simple_interval.upper, None])
+            ys.extend([0, 0, None])
+
+        return [go.Scatter(x=xs, y=ys, mode="lines", name="Event", fill="toself")]
 
     def plot_2d(self) -> List[go.Scatter]:
         """
@@ -253,7 +281,9 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         """
         Create a layout for the plotly plot.
         """
-        if len(self.variables) == 2:
+        if len(self.variables) == 1:
+            result = {"xaxis_title": self.variables[0].name}
+        elif len(self.variables) == 2:
             result = {"xaxis_title": self.variables[0].name,
                       "yaxis_title": self.variables[1].name}
         elif len(self.variables) == 3:
@@ -368,6 +398,18 @@ class Event(AbstractCompositeSet):
 
     def complement_if_empty(self) -> Self:
         raise NotImplementedError("Complement of an empty Event is not yet supported.")
+
+    def marginal(self, variables: VariableSet) -> Event:
+        """
+        Create the marginal event, that only contains the variables given..
+
+        :param variables: The variables to contain in the marginal event
+        :return: The marginal event
+        """
+        result = self.__class__()
+        for simple_set in self.simple_sets:
+            result.add_simple_set(simple_set.marginal(variables))
+        return result.make_disjoint()
 
     def plot(self, color="#636EFA") -> Union[List[go.Scatter], List[go.Mesh3d]]:
         """
