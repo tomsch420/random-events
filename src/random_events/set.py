@@ -5,6 +5,7 @@ from sortedcontainers import SortedSet
 from typing_extensions import Self, TYPE_CHECKING, Dict, Any
 
 from .sigma_algebra import *
+from .utils import get_full_class_name
 
 
 class SetElement(AbstractSimpleSet, int, enum.Enum):
@@ -57,11 +58,15 @@ class SetElement(AbstractSimpleSet, int, enum.Enum):
         return self.value < other.value
 
     def to_json(self) -> Dict[str, Any]:
-        return {**super().to_json(), "value": self.value}
+        return {"type": get_full_class_name(SetElement), "value": self.value,
+                "class_name": self.__class__.__name__, "content": dict(map(lambda item: (item.name, item.value),
+                                                                           self.__class__))
+}
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
-        return cls(data["value"])
+        deserialized_class = SetElement(data["class_name"], data["content"])
+        return deserialized_class(data["value"])
 
     def as_composite_set(self) -> AbstractCompositeSet:
         return Set(self)
