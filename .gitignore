@@ -6,3 +6,4 @@ build
 dist
 src/random_events.egg-info
 */__pycache__/
+book/_build
