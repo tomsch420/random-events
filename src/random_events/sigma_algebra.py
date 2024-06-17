@@ -303,7 +303,7 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         """
         if self.is_empty():
             return EMPTY_SET_SYMBOL
-        return "{" + " u ".join([simple_set.to_string() for simple_set in self.simple_sets]) + "}"
+        return " u ".join([simple_set.to_string() for simple_set in self.simple_sets])
 
     def __str__(self):
         return self.to_string()
