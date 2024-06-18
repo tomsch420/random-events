@@ -215,15 +215,128 @@ As neither {prf:ref}`algo-make-disjoint` nor {prf:ref}`algo-split-into-disjoint-
 
 ## Product Sigma Algebra
 
-In machine learning, problems a typically constructed over a set of variables and not just intervals or simple sets.
+In machine learning, problems are typically constructed over a set of variables and not just intervals or simple sets.
 Hence, a multidimensional algebra is needed.
+A multidimensional algebra is constructed by taking the cartesian product of the univariate algebras. For instance, 
+let {math}`A = \{a_1, a_2, a_3\}` and {math}`B = \{b_1, b_2, b_3\}` be two spaces of elementary events.
+Constructing an algebra over both can be down by taking the cartesian product of the two sets 
+{math}`E = A \times B = \{(a_1, b_1), (a_1, b_2), (a_1, b_3), (a_2, b_1), (a_2, b_2), (a_2, b_3), (a_3, b_1), 
+(a_3, b_2), (a_3, b_3)\}`.
 
-As you can probably imagine, it is very inefficient to work with powersets of sets due to their exponential size. 
-That's why I introduce the concept of product sigma-algebras.
+Formally, the product sigma algebra is defined in {prf:ref}`def-product-sigma-algebra`.
 
-Product sigma-algebras are constructed by taking the cartesian product of sets and then constructing the 
-sigma-algebra on the resulting set.
+````{prf:definition} Product Sigma Algebra 
+:label: def-product-sigma-algebra
 
-In this package, we generate product algebras from a viewpoint of classical machine learning. 
-In machine learning scenarios, we typically have a set of variables that we want to reason about. Random Events also 
-start there. Let's start by defining some variables.
+Let {math}`(E_1,\Im_1)` and {math}`(E_2,\Im_2)` be measurable spaces.
+The product sigma-algebra of {math}`\Im_1` and {math}`\Im_2` is denoted {math}`\Im_1 \otimes \Im_2`, and defined as:
+{math}`\Im_1 \otimes \Im_2 := \sigma(\{S_1 \times S_2 : S_1 \in \Im_1 \wedge S_2 \in \Im_2\})`
+where {math}`\sigma` denotes generated sigma-algebra and {math}`\times` denotes Cartesian product.
+This is a sigma-algebra on the Cartesian product {math}`E_1 \times E_2`. {cite}`hunter2011data`
+````
+
+In machine learning, the sets {math}`E_1, E_2, ... E_n` are typically referred to as variables.
+
+As you can probably imagine, it is very inefficient to directly work with cartesian products of sets directly due to 
+their exponential size. 
+
+The rest of this guide addresses an efficient representation of random events of the product sigma algebra.
+
+Instead of storing all combinations that are constructed by the cartesian product, we can store the constraints that 
+apply to every variable separately.
+The datastructure that does so is called a *Simple Event*.
+A union of simple events is called *Event*.
+The intersection of two simple events is straight forward shown in {prf:ref}`lemma-intersection-simple-event`.
+
+
+````{prf:lemma} Intersection of two Random Events in the Product Sigma Algebra 
+:label: lemma-intersection-simple-event
+
+The intersection of two simple events is given by the variable-wise intersections
+
+```{math}
+(A_1 \times B_1) \cap (A_2 \times B_2) = (A_1 \cap A_2) \times (B_1 \cap B_2). 
+``` 
+{cite}`hunter2011data`
+````
+
+````{prf:lemma} Complement of a Random Event in the Product Sigma Algebra 
+:label: lemma-complement-product-sigma-algebra
+
+The complement of a simple event is given by
+
+```{math}
+:label: eq-complement-product-sigma-algebra
+(A \times B)^c = (A^c \times B) \cup (A \times B) \cup (A \times B^c). 
+``` 
+{cite}`hunter2011data`
+````
+
+While the complement of a simple event as stated in {prf:ref}`lemma-complement-product-sigma-algebra` is correct,
+it is exponential heavy to calculate.
+However, the proof below shows how to calculate the complement of a simple event that results in linear many terms.
+
+````{prf:proof} Complement of a Simple Event in Linear Time.
+
+Let
+\begin{align*}
+    \mathbb{A} &= A \cup A^c \, , \\
+    \mathbb{B} &= B \cup B^c \text{ and }\\
+    \mathbb{C} &= C \cup C^c.
+\end{align*}
+
+**Induction Assumption**
+
+\begin{align*}
+    (A \times B)^c = (A^c \times \mathbb{B}) \cup (A \times B^C)
+\end{align*}
+*Proof:*
+\begin{align*}
+    (A \times B)^c &= (A^c \times B) \cup (A \times B^c) \cup (A^c \times B^c) \\
+    &= (A^c \times B) \cup (A^c \times B^c) \cup (A \times B^c) \\
+    &= ( A^c \times (B \cup B^c) ) \cup   (A \times B^c) \\
+    &= (A^c \times \mathbb{B}) \cup (A \times B^C) \hspace{0.5em}\square
+\end{align*}
+
+**Induction Step**
+
+\begin{align*}
+    (A \times B \times C)^c = (A^c \times \mathbb{B} \times \mathbb{C}) \cup (A \times B^C \times \mathbb{C} ) \cup 
+    (A \times B \times C^c)
+\end{align*}
+*Proof:*
+\begin{align*}
+    (A \times B \times C)^c &= (A^c \times B \times C) \cup (A \times B^c \times C) \cup (A \times B \times C^c) \\ 
+    &\cup (A^c \times B^c \times C) \cup (A^c \times B \times C^c) \cup (A \times B^c \times C^c) \\ 
+    &\cup (A^c \times B^c \times C^c) \\
+    &= (C \times \underbrace{(A^c \times B) \cup (A \times B^c) \cup (A^c \times B^c))}_{\text{Induction Assumption}} \\
+    &\cup (C^c \times  \underbrace{(A^c \times B) \cup (A \times B^c) \cup (A^c \times B^c))}_{\text{Induction Assumption}} \\ 
+    &\cup (A \times B \times C^c) \\
+    &= (C \times (A^c \times \mathbb{B}) \cup (A \times B^C)) \cup 
+       (C^c \times (A^c \times \mathbb{B}) \\ 
+       &\cup (A \times B^C)) \cup (A \times B \times C^c)\\
+    &= (A^c \times \mathbb{B} \times \mathbb{C}) \cup (A \times B^C \times \mathbb{C} ) \cup (A \times B \times C^c)
+\end{align*}
+````
+
+## Connections to Logic
+
+Algebraic concepts are hard to grasp.
+Since you, the reader is very likely a computer scientist, I will re-explain events from the perspective of logic.
+We can rewrite the assignment of a variable to a set as a boolean variable. For example,
+{math}`Item_{\{\text{bowl}, \text{cup}\}} = item \in \{\text{bowl}, \text{cup}\}`
+is a boolean variable that is true if the item is a bowl or a cup.
+We can rewrite the statement of the union as a logical statement.
+
+```{math}
+\left( Item_{\{\text{bowl}\}} \land Color_{\{\text{blue}\}} \right) \lor \left( Item_{\{\text{cup}\}} 
+\land Color_{\{\text{red}\}} \right)
+```
+This logical statement describes either a blue bowl or a red cup.
+The event can always be thought of as a disjunction of conjunctions, hence a logical statement in the 
+[disjunctive normal form](https://en.wikipedia.org/wiki/Disjunctive_normal_form).
+This connection between the measurable space of a sigma algebra and logic is important for the combination of 
+correct and consistent probabilistic reasoning.
+
+```{bibliography}
+```

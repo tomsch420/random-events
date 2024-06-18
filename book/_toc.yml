@@ -4,4 +4,6 @@
 format: jb-book
 root: intro
 chapters:
-- file: conceptual-guide
+- file: quickstart
+- file: conceptual_guide
+- file: technical_guide
