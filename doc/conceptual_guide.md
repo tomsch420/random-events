@@ -338,5 +338,50 @@ The event can always be thought of as a disjunction of conjunctions, hence a log
 This connection between the measurable space of a sigma algebra and logic is important for the combination of 
 correct and consistent probabilistic reasoning.
 
+
+## Application
+
+You may ask yourself where the product algebra matters in real applications.
+Consider your kitchen.
+You most likely have some regions where you are able to stand, and some regions where you can't.
+If you look at the floor plan of your kitchen, you could perhaps describe it as the following event.  
+
+```{code-cell} ipython3
+:tags: []
+
+from random_events.variable import *
+from random_events.product_algebra import *
+from random_events.interval import *
+x = Continuous("x")
+y = Continuous("y")
+
+kitchen = SimpleEvent({x: closed(0, 6.6), y: closed(0, 7)}).as_composite_set()
+refrigerator = SimpleEvent({x: closed(5, 6), y: closed(6.3, 7)}).as_composite_set()
+top_kitchen_island = SimpleEvent({x: closed(0, 5), y: closed(6.5, 7)}).as_composite_set()
+left_cabinets = SimpleEvent({x: closed(0, 0.5), y: closed(0, 6.5)}).as_composite_set()
+
+center_island = SimpleEvent({x: closed(2, 4), y: closed(3, 5)}).as_composite_set()
+
+occupied_spaces = refrigerator | top_kitchen_island | left_cabinets | center_island
+fig = go.Figure(occupied_spaces.plot(), occupied_spaces.plotly_layout())
+fig.show()
+```
+Now posing the question on where you can stand in your kitchen,
+you can calculate the complement of the occupied space with the kitchen.
+
+```{code-cell} ipython3
+:tags: []
+
+free_space = kitchen.difference_with(occupied_spaces)
+fig = go.Figure(free_space.plot(), free_space.plotly_layout())
+fig.show()
+```
+
+Now this already sounds somewhat useful.
+However, just the events are of limited use. 
+The real power of the product algebra comes when you start to calculate probabilities of events.
+For this, 
+you can check out this tutorial on [probability theory](https://probabilistic-model.readthedocs.io/en/latest/examples/probability_theory.html).
+
 ```{bibliography}
 ```

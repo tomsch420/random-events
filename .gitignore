@@ -1,9 +1,8 @@
-doc/build
-doc/static
 .idea
 .pytest_cache
 build
 dist
 src/random_events.egg-info
 */__pycache__/
-book/_build
+doc/_build
+doc/_autosummary
