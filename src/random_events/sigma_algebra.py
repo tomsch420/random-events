@@ -303,7 +303,7 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         """
         if self.is_empty():
             return EMPTY_SET_SYMBOL
-        return "{" + " u ".join([simple_set.to_string() for simple_set in self.simple_sets]) + "}"
+        return " u ".join([simple_set.to_string() for simple_set in self.simple_sets])
 
     def __str__(self):
         return self.to_string()
@@ -360,7 +360,7 @@ class AbstractCompositeSet(SubclassJSONSerializer):
                 # get the intersection of a and b
                 intersection_a_b: AbstractSimpleSet = simple_set_a.intersection_with(simple_set_b)
 
-                # if the intersection is not empty add it to the non-disjoint set
+                # if the intersection is not empty, add it to the non-disjoint set
                 non_disjoint.add_simple_set(intersection_a_b)
 
                 # get the difference of the simple set with the intersection.

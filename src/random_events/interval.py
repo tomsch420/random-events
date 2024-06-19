@@ -163,7 +163,7 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         """
         :return: The center point of the interval
         """
-        return ((self.lower + self.upper) / 2) + self.lower
+        return (self.lower + self.upper) / 2
 
 
 class Interval(sigma_algebra.AbstractCompositeSet):
