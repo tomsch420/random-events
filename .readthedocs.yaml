@@ -19,12 +19,14 @@ build:
 
 python:
   install:
+    - requirements: docs/requirements.txt
+    - requirements: requirements.txt
     - method: pip
       path: .
       extra_requirements:
       - sphinx
-    - method: pip
-      path: doc/requirements.txt
+
+
 
 sphinx:
   builder: html
