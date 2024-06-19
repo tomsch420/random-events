@@ -23,6 +23,8 @@ python:
       path: .
       extra_requirements:
       - sphinx
+    - method: pip
+      path: doc/requirements.txt
 
 sphinx:
   builder: html
