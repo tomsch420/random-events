@@ -55,7 +55,7 @@ def indices_to_complex_event(indices: np.array) -> Event:
     for index in indices:
         event = SimpleEvent({y: closed_open(-index[0] - 1, -index[0]),
                        x: closed_open(index[1], index[1] + 1)})
-        result.simple_sets.add(event)
+        result |= event.as_composite_set()
     return result.simplify()
 
 fig = go.Figure()

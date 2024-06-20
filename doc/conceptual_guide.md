@@ -197,20 +197,37 @@ An interval can be converted into a disjoint union of simple intervals using {pr
 
 2. while {math}`S^{'} \neq \emptyset`:
 
-    3. disjoint, {math}`S^{'} \leftarrow` split_into_disjoint_and_non_disjoint {math}`(S^{'})`
+    3. {math}`S_{disjoint}`, {math}`S^{'} \leftarrow` split_into_disjoint_and_non_disjoint {math}`(S^{'})`
     
-    4. {math}`S^* \leftarrow S^* \cup` disjoint
+    4. {math}`S^* \leftarrow S^* \cup S_{disjoint}`
 
 return {math}`S^*`
 ```
 
 ```{prf:algorithm} split_into_disjoint_and_non_disjoint
 :label: algo-split-into-disjoint-and-non-disjoint
-TODO
+
+**Inputs** A union of sets  {math}`S = \bigcup_{i=1}^N s_i` that is not nescessarily dijsoint.
+
+**Output**  A disjoint union of sets {math}`A = \bigcup_{i=1}^N a_i` and 
+a non disjoint union of sets {math}`B = \bigcup_{i=1}^N b_i` such that  {math}`S = A \cup B`.
+
+1. {math}`A \leftarrow \emptyset`
+
+2.  {math}`B \leftarrow \emptyset`
+
+3. for {math}`s_i \in S`
+
+    3.1 {math}` A \leftarrow  A \cup  \left( s_i \setminus \{s_j | s_j \in S \text{ if } i \neq j \} \right)`
+    
+    3.2 {math}` B \leftarrow  B \cup \left( \bigcup_{j \neq i} s_i \cap s_j \right)`
+    
+return {math}`A, B`
+
 ```
 
 As neither {prf:ref}`algo-make-disjoint` nor {prf:ref}`algo-split-into-disjoint-and-non-disjoint` use the fact that 
- {math}`S` is an interval,  we can use them to convert any set of sets into a disjoint union of sets.
+ {math}`S` is an interval, we can use them to convert any set of sets into a disjoint union of sets.
 
 
 ## Product Sigma Algebra
@@ -319,6 +336,56 @@ Let
 \end{align*}
 ````
 
+A less formal and more intuitive explanation of why the complement is only linear big is obtained by thinking
+about it geometrically. 
+Consider the unit square.
+
+```{code-cell} ipython3
+:tags: []
+
+from random_events.variable import *
+from random_events.product_algebra import *
+from random_events.interval import *
+x = Continuous("x")
+y = Continuous("y")
+
+unit_square = SimpleEvent({x: closed(0, 1), y: closed(0, 1)}).as_composite_set()
+fig = go.Figure(unit_square.plot(), unit_square.plotly_layout())
+fig.update_layout(title="Unit Square")
+fig.show()
+```
+
+If we now want to construct the complement of said square, we can do so by first constructing an event that
+contains the parts left and right of the square.
+It will be infinitely wide on the y-axis.
+Be aware that since infinite wide areas cannot be plotted, the events are limited to a visible range.
+However, this does not influence the line of thinking.
+
+```{code-cell} ipython3
+:tags: []
+
+
+not_x_and_R = SimpleEvent({x: (~closed(0, 1)) & closed(-1, 2), y: closed(-1, 2)}).as_composite_set()
+fig = go.Figure(not_x_and_R.plot(), not_x_and_R.plotly_layout())
+fig.update_layout(title="Left and right part of the complement of the unit square.")
+fig.show()
+```
+
+The last part missing is the top and bottom part of the complement of the unit square. For this, we can take the 
+complement of y and keep x the way it was.
+
+```{code-cell} ipython3
+:tags: []
+
+
+not_y_and_x = SimpleEvent({x: closed(0, 1), y: (~closed(0, 1)) & closed(-1, 2)}).as_composite_set()
+fig.add_traces(not_y_and_x.plot())
+fig.update_layout(title="All parts of the complement of the unit square.")
+fig.show()
+```
+
+As we can see, this process constructs the correct complement.
+
 ## Connections to Logic
 
 Algebraic concepts are hard to grasp.
@@ -348,12 +415,6 @@ If you look at the floor plan of your kitchen, you could perhaps describe it as 
 
 ```{code-cell} ipython3
 :tags: []
-
-from random_events.variable import *
-from random_events.product_algebra import *
-from random_events.interval import *
-x = Continuous("x")
-y = Continuous("y")
 
 kitchen = SimpleEvent({x: closed(0, 6.6), y: closed(0, 7)}).as_composite_set()
 refrigerator = SimpleEvent({x: closed(5, 6), y: closed(6.3, 7)}).as_composite_set()
