@@ -1,8 +1,8 @@
 from __future__ import annotations
+
 import enum
 
-from sortedcontainers import SortedSet
-from typing_extensions import Self, TYPE_CHECKING, Dict, Any
+from typing_extensions import Type
 
 from .sigma_algebra import *
 from .utils import get_full_class_name
@@ -57,15 +57,21 @@ class SetElement(AbstractSimpleSet, int, enum.Enum):
     def __lt__(self, other):
         return self.value < other.value
 
+    @classmethod
+    def cls_to_json(cls) -> Dict[str, Any]:
+        return {"class_name": cls.__name__, "content": dict(map(lambda item: (item.name, item.value), cls))}
+
+    @classmethod
+    def cls_from_json(cls, data: Dict[str, Any]) -> Type[enum.Enum]:
+        return cls(data["class_name"], data["content"])
+
     def to_json(self) -> Dict[str, Any]:
         return {"type": get_full_class_name(SetElement), "value": self.value,
-                "class_name": self.__class__.__name__, "content": dict(map(lambda item: (item.name, item.value),
-                                                                           self.__class__))
-}
+                **self.cls_to_json()}
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
-        deserialized_class = SetElement(data["class_name"], data["content"])
+        deserialized_class = cls.cls_from_json(data)
         return deserialized_class(data["value"])
 
     def as_composite_set(self) -> AbstractCompositeSet:
@@ -86,6 +92,17 @@ class Set(AbstractCompositeSet):
 
     def make_disjoint(self) -> Self:
         return self
+
+    def to_json(self) -> Dict[str, Any]:
+        return {**SubclassJSONSerializer.to_json(self),
+                "simple_set_class": self.simple_sets[0].cls_to_json(),
+                "simple_set_indices": list(map(lambda item: int(item), self.simple_sets))}
+
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> Self:
+        simple_set_class = SetElement.cls_from_json(data["simple_set_class"])
+        simple_sets = [simple_set_class(index) for index in data["simple_set_indices"]]
+        return cls(*simple_sets)
 
 
 # Type definitions

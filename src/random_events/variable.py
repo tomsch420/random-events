@@ -1,4 +1,4 @@
-from typing_extensions import Self, Type, Dict, Any, Union
+from typing_extensions import Self, Type, Dict, Any, Union, Optional
 
 from .interval import Interval, SimpleInterval, reals
 from .set import Set, SetElement
@@ -70,16 +70,25 @@ class Symbolic(Variable):
     """
     domain: Set
 
-    def __init__(self, name: str, domain: Union[Type[SetElement], SetElement]):
+    def __init__(self, name: Optional[str] = None, domain: Union[Type[SetElement], Set] = None):
         """
         Construct a symbolic variable.
         :param name: The name.
         :param domain: The enum class that lists all elements of the domain.
         """
-        if isinstance(domain, type) and issubclass(domain, SetElement):
-            super().__init__(name, Set(*[value for value in domain if value != domain.EMPTY_SET]))
-        else:
-            super().__init__(name, domain)
+
+        if domain is None:
+            raise ValueError("The domain of a symbolic variable must be specified.")
+
+        if isinstance(domain, Set):
+            domain = domain.simple_sets[0].__class__
+
+        assert isinstance(domain, type) and issubclass(domain, SetElement), ("The domain must be a subclass of "
+                                                                             "SetElement.")
+        if name is None:
+            name = domain.__name__
+
+        super().__init__(name, Set(*[value for value in domain if value != domain.EMPTY_SET]))
 
     def domain_type(self) -> Type[SetElement]:
         return self.domain.simple_sets[0].all_elements

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import enum
+import math
 from dataclasses import dataclass
 from typing import Dict, Any
 
@@ -165,6 +166,21 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         """
         return (self.lower + self.upper) / 2
 
+    def contained_integers(self) -> int:
+        """
+        :return: Yield integers contained in the interval
+        """
+
+        rounded_lower = math.ceil(self.lower)
+        if rounded_lower == self.lower and self.left == Bound.OPEN:
+            rounded_lower += 1
+
+        rounded_upper = math.floor(self.upper)
+        if rounded_upper == self.upper and self.right == Bound.OPEN:
+            rounded_upper -= 1
+
+        yield from range(rounded_lower, rounded_upper + 1)
+
 
 class Interval(sigma_algebra.AbstractCompositeSet):
     simple_sets: SortedSet[SimpleInterval]
@@ -210,6 +226,13 @@ class Interval(sigma_algebra.AbstractCompositeSet):
         :return: True if the interval is a singleton (contains only one value), False otherwise.
         """
         return len(self.simple_sets) == 1 and self.simple_sets[0].is_singleton()
+
+    def contained_integers(self) -> int:
+        """
+        :return: Yield integers contained in the interval
+        """
+        for simple_set in self.simple_sets:
+            yield from simple_set.contained_integers()
 
 
 def open(left: float, right: float) -> Interval:
