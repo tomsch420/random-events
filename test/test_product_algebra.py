@@ -96,7 +96,7 @@ class EventTestCase(unittest.TestCase):
         second_event = SimpleEvent({self.a: Set(TestEnum.A, TestEnum.B), self.x: open(1, 4)}).as_composite_set()
         union = event | second_event
         result = Event(SimpleEvent({self.a: TestEnum.A, self.x: open(-float("inf"), 4)}),
-                        SimpleEvent({self.a: TestEnum.B, self.x: open(1, 4)}))
+                       SimpleEvent({self.a: TestEnum.B, self.x: open(1, 4)}))
         self.assertEqual(union, result)
 
     def test_marginal_event(self):
@@ -109,6 +109,11 @@ class EventTestCase(unittest.TestCase):
         fig = go.Figure(marginal.plot())
         # fig.show()
 
+    def test_to_json_multiple_events(self):
+        event = SimpleEvent({self.x: closed(0, 1), self.y: SimpleInterval(3, 5),
+                             self.a: Set(TestEnum.A, TestEnum.B)}).as_composite_set()
+        event_ = AbstractSimpleSet.from_json(event.to_json())
+        self.assertEqual(event_, event)
 
 if __name__ == '__main__':
     unittest.main()

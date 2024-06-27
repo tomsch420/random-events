@@ -180,15 +180,31 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
     def non_empty_to_string(self) -> str:
         return "{" + ", ".join(f"{variable.name} = {assignment}" for variable, assignment in self.items()) + "}"
 
+    def variables_to_json(self) -> List:
+        return [variable.to_json() for variable in self.keys()]
+
+    def assignments_to_json(self) -> List:
+        return [assignment.to_json() for assignment in self.values()]
+
     def to_json(self) -> Dict[str, Any]:
         return {**super().to_json(),
-                "assignments": [(variable.to_json(), assignment.to_json()) for variable, assignment in self.items()]}
+                "variables": self.variables_to_json(),
+                "assignments": self.assignments_to_json()}
+
+    def to_json_assignments_only(self) -> Dict[str, Any]:
+        return {**super().to_json(),
+                "assignments": self.assignments_to_json()}
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
-        return cls(
-            {Variable.from_json(variable): AbstractCompositeSet.from_json(assignment) for variable, assignment in
-             data["assignments"]})
+        variables = [Variable.from_json(variable) for variable in data["variables"]]
+        assignments = [AbstractCompositeSet.from_json(assignment) for assignment in data["assignments"]]
+        return cls({variable: assignment for variable, assignment in zip(variables, assignments)})
+
+    @classmethod
+    def from_json_given_variables(cls, data: Dict[str, Any], variables: List[Variable]) -> Self:
+        assignments = [AbstractCompositeSet.from_json(assignment) for assignment in data["assignments"]]
+        return cls({variable: assignment for variable, assignment in zip(variables, assignments)})
 
     def plot(self) -> Union[List[go.Scatter], List[go.Mesh3d]]:
         """
@@ -445,6 +461,18 @@ class Event(AbstractCompositeSet):
         """
         super().add_simple_set(simple_set)
         self.fill_missing_variables()
+
+    def to_json(self) -> Dict[str, Any]:
+        variables = [variable.to_json() for variable in self.all_variables]
+        simple_sets = [simple_set.to_json_assignments_only() for simple_set in self.simple_sets]
+        return {**SubclassJSONSerializer.to_json(self),
+                "variables": variables, "simple_sets": simple_sets}
+
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any]) -> Self:
+        variables = [Variable.from_json(variable) for variable in data["variables"]]
+        simple_sets = [SimpleEvent.from_json_given_variables(simple_set, variables) for simple_set in data["simple_sets"]]
+        return cls(*simple_sets)
 
 
 # Type definitions
