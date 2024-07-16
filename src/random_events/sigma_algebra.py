@@ -370,7 +370,7 @@ class AbstractCompositeSet(SubclassJSONSerializer):
                 if len(difference_with_intersection.simple_sets) == 0:
                     # skip the rest of the loop and mark the set for discarding
                     difference_of_a_with_every_b = None
-                    continue
+                    break
 
                 # add the disjoint remainder
                 difference_of_a_with_every_b = difference_with_intersection

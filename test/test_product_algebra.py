@@ -115,5 +115,25 @@ class EventTestCase(unittest.TestCase):
         event_ = AbstractSimpleSet.from_json(event.to_json())
         self.assertEqual(event_, event)
 
+
+class NoneTypeObjectInDifferenceTestCase(unittest.TestCase):
+    x: Continuous = Continuous("x")
+    y: Continuous = Continuous("y")
+    event_1 = Event(SimpleEvent({x: SimpleInterval(0, 0.25, Bound.CLOSED, Bound.CLOSED),
+                                 y: SimpleInterval(0.25, 1, Bound.CLOSED, Bound.CLOSED)}),
+                    SimpleEvent({x: SimpleInterval(0.75, 1, Bound.CLOSED, Bound.CLOSED),
+                                 y: SimpleInterval(0.75, 1, Bound.CLOSED, Bound.CLOSED)}))
+    event_2 = SimpleEvent({x: SimpleInterval(0., 0.25, Bound.CLOSED, Bound.CLOSED),
+                           y: SimpleInterval(0., 1, Bound.CLOSED, Bound.CLOSED)}).as_composite_set()
+
+    def test_union(self):
+        union = self.event_1 | self.event_2
+        union_by_hand = Event(SimpleEvent({self.x: SimpleInterval(0, 0.25, Bound.CLOSED, Bound.CLOSED),
+                                           self.y: SimpleInterval(0., 1, Bound.CLOSED, Bound.CLOSED)}),
+                              SimpleEvent({self.x: SimpleInterval(0.75, 1, Bound.CLOSED, Bound.CLOSED),
+                                           self.y: SimpleInterval(0.75, 1, Bound.CLOSED, Bound.CLOSED)}))
+        self.assertEqual(union, union_by_hand)
+
+
 if __name__ == '__main__':
     unittest.main()
