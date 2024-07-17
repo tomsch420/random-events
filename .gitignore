@@ -4,5 +4,5 @@ build
 dist
 src/random_events.egg-info
 */__pycache__/
-doc/_build
-doc/_autosummary
+docs/_build
+docs/_autosummary

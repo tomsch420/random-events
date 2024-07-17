@@ -14,7 +14,6 @@ class Set(AbstractCompositeSet, IntFlag):
     """
 
     # int flag overload block
-    __init__ = IntFlag.__init__
     __or__ = IntFlag.__or__
     __and__ = IntFlag.__and__
     __sub__ = IntFlag.__sub__
@@ -73,9 +72,3 @@ class Set(AbstractCompositeSet, IntFlag):
         return {**SubclassJSONSerializer.to_json(self),
                 "simple_set_class": self.simple_sets[0].cls_to_json(),
                 "simple_set_indices": list(map(lambda item: int(item), self.simple_sets))}
-
-    @classmethod
-    def _from_json(cls, data: Dict[str, Any]) -> Self:
-        simple_set_class = SetElement.cls_from_json(data["simple_set_class"])
-        simple_sets = [simple_set_class(index) for index in data["simple_set_indices"]]
-        return cls(*simple_sets)
