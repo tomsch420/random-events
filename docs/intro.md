@@ -9,7 +9,7 @@ events that are suitable for probabilistic reasoning in a python.
 If you use this software, please cite it as below.
 
 ```bibtex
-@software{schierenbeck2024pm,
+@software{schierenbeck2024re,
 author = {Schierenbeck, Tom},
 title = {Random-Events},
 url = {https://github.com/tomsch420/random-events},
