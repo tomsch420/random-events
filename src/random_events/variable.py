@@ -1,6 +1,8 @@
+from abc import abstractmethod
+
 from typing_extensions import Self, Type, Dict, Any, Union, Optional
 
-from .interval import Interval, SimpleInterval, reals
+from .interval import Interval, reals
 from .set import Set, SetElement
 from .sigma_algebra import AbstractCompositeSet
 from .utils import SubclassJSONSerializer
@@ -49,6 +51,14 @@ class Variable(SubclassJSONSerializer):
     def _from_json(cls, data: Dict[str, Any]) -> Self:
         return cls(data["name"], AbstractCompositeSet.from_json(data["domain"]))
 
+    @property
+    @abstractmethod
+    def is_numeric(self):
+        """
+        :return: Rather, this variable has a numeric domain or not.
+        """
+        raise NotImplementedError
+
 
 class Continuous(Variable):
     """
@@ -60,6 +70,10 @@ class Continuous(Variable):
 
     def __init__(self, name: str, domain=None):
         super().__init__(name, reals())
+
+    @property
+    def is_numeric(self):
+        return True
 
 
 class Symbolic(Variable):
@@ -93,6 +107,10 @@ class Symbolic(Variable):
     def domain_type(self) -> Type[SetElement]:
         return self.domain.simple_sets[0].all_elements
 
+    @property
+    def is_numeric(self):
+        return False
+
 
 class Integer(Variable):
     """
@@ -104,3 +122,7 @@ class Integer(Variable):
 
     def __init__(self, name: str, domain=None):
         super().__init__(name, reals())
+
+    @property
+    def is_numeric(self):
+        return True

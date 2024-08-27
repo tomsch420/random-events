@@ -284,7 +284,7 @@ The complement of a simple event is given by
 
 ```{math}
 :label: eq-complement-product-sigma-algebra
-(A \times B)^c = (A^c \times B) \cup (A \times B) \cup (A \times B^c). 
+(A \times B)^c = (A^c \times B) \cup (A \times B^c) \cup (A^c \times B^c). 
 ``` 
 {cite}`hunter2011data`
 ````
