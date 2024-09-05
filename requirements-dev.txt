@@ -2,4 +2,6 @@
 
 jupyter
 pillow
-jupyterquiz==2.7.0a4
+polytope
+ortools
+scipy
