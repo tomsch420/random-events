@@ -8,4 +8,5 @@ chapters:
 - file: conceptual_guide
 - file: technical_guide
 - file: advanced_use
+- file: polytope
 - file: autoapi/index

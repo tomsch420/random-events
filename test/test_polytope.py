@@ -42,11 +42,11 @@ class PolytopeTestCase(unittest.TestCase):
         polytope = Polytope.from_2d_points(self.points)
         result = polytope.outer_box_approximation(0.1)
         self.assertTrue(result.is_disjoint())
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=self.points[:, 0], y=self.points[:, 1], mode='markers', name='points'))
-        fig.add_traces(result.plot())
-        fig.update_layout(result.plotly_layout())
-        fig.show()
+        # fig = go.Figure()
+        # fig.add_trace(go.Scatter(x=self.points[:, 0], y=self.points[:, 1], mode='markers', name='points'))
+        # fig.add_traces(result.plot())
+        # fig.update_layout(result.plotly_layout())
+        # fig.show()
 
 
 if __name__ == '__main__':

@@ -11,6 +11,12 @@ from .product_algebra import Event, SimpleEvent, Continuous
 
 
 class Polytope(polytope.Polytope):
+    """
+    Extension of the polytope class from the polytope library.
+
+    This class enables conversion to simple events and provides the inner box and outer box approximation
+    from https://cse.lab.imtlucca.it/~bemporad/publications/papers/compgeom-boxes.pdf.
+    """
 
     @classmethod
     def from_polytope(cls, polytope_: polytope.Polytope) -> Self:
@@ -79,7 +85,7 @@ class Polytope(polytope.Polytope):
 
     def as_box_polytope(self) -> Self:
         """
-        Convert the polytope to a box polytope.
+        :return: The polytope as box polytope.
         """
         lower, upper = self.bounding_box
         return self.from_box([(a[0], b[0]) for a, b in zip(lower, upper)])
@@ -93,6 +99,8 @@ class Polytope(polytope.Polytope):
 
         :param axis: The axis to split on.
         :param value: The value to split on.
+
+        :return: The left and right split of the polytope.
         """
         a_vector = np.zeros((1, self.A.shape[1]))
         a_vector[0, axis] = 1.
@@ -113,7 +121,10 @@ class Polytope(polytope.Polytope):
     def outer_box_approximation(self, minimum_volume: float = 0.1) -> Event:
         """
         Compute an outer box approximation of the polytope.
+        This implements Algorithm 6 in https://cse.lab.imtlucca.it/~bemporad/publications/papers/compgeom-boxes.pdf
+
         :param minimum_volume: The minimum volume (epsilon) for the approximation.
+
         :return: The outer box approximation of the polytope as a random event.
         """
         polytopes_to_split = deque([self])
@@ -125,7 +136,7 @@ class Polytope(polytope.Polytope):
 
             # if the box is too small, skip
             volume = bounding_box_of_current_polytope.volume
-            if volume < minimum_volume:
+            if volume < minimum_volume or bounding_box_of_current_polytope <= current_polytope:
                 resulting_boxes.append(current_polytope)
                 continue
 
