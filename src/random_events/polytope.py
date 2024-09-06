@@ -4,7 +4,7 @@ import numpy as np
 import polytope
 from ortools.linear_solver import pywraplp
 from scipy.spatial import ConvexHull
-from typing_extensions import Self
+from typing_extensions import Self, Tuple
 
 from .interval import closed_open
 from .product_algebra import Event, SimpleEvent, Continuous
@@ -77,48 +77,69 @@ class Polytope(polytope.Polytope):
 
         return Event(*[box.to_simple_event() for box in resulting_boxes]).make_disjoint()
 
+    def as_box_polytope(self) -> Self:
+        """
+        Convert the polytope to a box polytope.
+        """
+        lower, upper = self.bounding_box
+        return self.from_box([(a[0], b[0]) for a, b in zip(lower, upper)])
+
+    def copy(self):
+        return self.from_polytope(self.__copy__())
+
+    def split_on_axis_value(self, axis: int, value: np.ndarray) -> Tuple[Self, Self]:
+        """
+        Split the polytope on a specific axis and value.
+
+        :param axis: The axis to split on.
+        :param value: The value to split on.
+        """
+        a_vector = np.zeros((1, self.A.shape[1]))
+        a_vector[0, axis] = 1.
+        b_vector = value
+
+        # construct left split
+        left = self.copy()
+        left.A = np.concatenate([left.A, a_vector])
+        left.b = np.concatenate([left.b, b_vector])
+
+        # construct right split
+        right = self.copy()
+        right.A = np.concatenate([right.A, -a_vector])
+        right.b = np.concatenate([right.b, -b_vector])
+
+        return left, right
+
     def outer_box_approximation(self, minimum_volume: float = 0.1) -> Event:
-        bounding_box: Polytope = polytope.polytope._bounding_box_to_polytope(*self.bounding_box)
-        boxes_to_split = deque([bounding_box])
+        """
+        Compute an outer box approximation of the polytope.
+        :param minimum_volume: The minimum volume (epsilon) for the approximation.
+        :return: The outer box approximation of the polytope as a random event.
+        """
+        polytopes_to_split = deque([self])
         resulting_boxes = []
 
-        while boxes_to_split:
-            current_box = boxes_to_split.popleft()
+        while polytopes_to_split:
+            current_polytope = polytopes_to_split.popleft()
+            bounding_box_of_current_polytope = current_polytope.as_box_polytope()
 
             # if the box is too small, skip
-            volume = current_box.volume
-            if volume < minimum_volume or current_box <= self:
-                resulting_boxes.append(current_box)
+            volume = bounding_box_of_current_polytope.volume
+            if volume < minimum_volume:
+                resulting_boxes.append(current_polytope)
                 continue
 
             # get the longest side
-            lower, upper = current_box.bounding_box
-            lower, upper = lower.flatten(), upper.flatten()
+            lower, upper = current_polytope.bounding_box
             side_lengths = upper - lower
             longest_side = np.argmax(side_lengths)
 
             # split the box in half along the longest side
             splitting_point = (lower[longest_side] + upper[longest_side]) / 2
-
-            left_box = self.from_box([[lower[i], upper[i]] if i != longest_side else [lower[i], splitting_point] for i in range(len(lower))])
-            left_box = self.intersect(left_box)
-            left_lower, left_upper = left_box.bounding_box
-            left_box = self.from_box([(a[0], b[0]) for a, b in zip(left_lower, left_upper)])
-
-
-            right_box = self.from_box([[lower[i], upper[i]] if i != longest_side else [splitting_point, upper[i]] for i in range(len(lower))])
-            right_box = self.intersect(right_box)
-            right_lower, right_upper = right_box.bounding_box
-            right_box = self.from_box([(a[0], b[0]) for a, b in zip(right_lower, right_upper)])
-
-            boxes_to_split.extend([left_box, right_box])
+            left, right = current_polytope.split_on_axis_value(longest_side, splitting_point)
+            polytopes_to_split.extend([left, right])
 
         return Event(*[box.to_simple_event() for box in resulting_boxes]).make_disjoint()
-
-
-
-
-
 
     def maximum_inner_box(self) -> Self:
         """
@@ -173,4 +194,4 @@ class Polytope(polytope.Polytope):
         minima = minima.flatten()
         maxima = maxima.flatten()
         return SimpleEvent({Continuous(f"x_{i}"): closed_open(minimum, maximum) for i, (minimum, maximum) in
-            enumerate(zip(minima, maxima))})
+                            enumerate(zip(minima, maxima))})
