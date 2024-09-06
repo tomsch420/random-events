@@ -47,13 +47,13 @@ class Polytope(polytope.Polytope):
         result = cls(constraints[:, :2], constraints[:, 2])
         return result
 
-    def inner_box_approximation(self, epsilon: float = 0.1) -> Event:
+    def inner_box_approximation(self, minimum_volume: float = 0.1) -> Event:
         """
         Compute an inner box approximation of the polytope.
 
         Similar to algorithm 5.
 
-        :param epsilon: The epsilon for the approximation.
+        :param minimum_volume: The minimum volume (epsilon) for the approximation.
         If a box is created in the induction with lower volume than epsilon, it will not be split further.
 
         :return: The inner box approximation of the polytope as a random event.
@@ -68,7 +68,7 @@ class Polytope(polytope.Polytope):
             resulting_boxes.append(inner_box)
 
             # if the inner box is too small, we do not split it further
-            if inner_box.volume < epsilon:
+            if inner_box.volume < minimum_volume:
                 continue
 
             # append the polytope without the inner box to the queue
@@ -77,8 +77,48 @@ class Polytope(polytope.Polytope):
 
         return Event(*[box.to_simple_event() for box in resulting_boxes]).make_disjoint()
 
-    def outer_box_approximation(self) -> Event:
-        ...
+    def outer_box_approximation(self, minimum_volume: float = 0.1) -> Event:
+        bounding_box: Polytope = polytope.polytope._bounding_box_to_polytope(*self.bounding_box)
+        boxes_to_split = deque([bounding_box])
+        resulting_boxes = []
+
+        while boxes_to_split:
+            current_box = boxes_to_split.popleft()
+
+            # if the box is too small, skip
+            volume = current_box.volume
+            if volume < minimum_volume or current_box <= self:
+                resulting_boxes.append(current_box)
+                continue
+
+            # get the longest side
+            lower, upper = current_box.bounding_box
+            lower, upper = lower.flatten(), upper.flatten()
+            side_lengths = upper - lower
+            longest_side = np.argmax(side_lengths)
+
+            # split the box in half along the longest side
+            splitting_point = (lower[longest_side] + upper[longest_side]) / 2
+
+            left_box = self.from_box([[lower[i], upper[i]] if i != longest_side else [lower[i], splitting_point] for i in range(len(lower))])
+            left_box = self.intersect(left_box)
+            left_lower, left_upper = left_box.bounding_box
+            left_box = self.from_box([(a[0], b[0]) for a, b in zip(left_lower, left_upper)])
+
+
+            right_box = self.from_box([[lower[i], upper[i]] if i != longest_side else [splitting_point, upper[i]] for i in range(len(lower))])
+            right_box = self.intersect(right_box)
+            right_lower, right_upper = right_box.bounding_box
+            right_box = self.from_box([(a[0], b[0]) for a, b in zip(right_lower, right_upper)])
+
+            boxes_to_split.extend([left_box, right_box])
+
+        return Event(*[box.to_simple_event() for box in resulting_boxes]).make_disjoint()
+
+
+
+
+
 
     def maximum_inner_box(self) -> Self:
         """
