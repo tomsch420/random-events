@@ -141,12 +141,18 @@ class OperationsWithEmptySetsTestCase(unittest.TestCase):
     y: Continuous = Continuous("y")
     a: Symbolic = Symbolic("a", TestEnum)
 
-    def test_union(self):
+    def test_empty_union(self):
         empty_event = SimpleEvent({self.x: SimpleInterval(0, 0), self.y: SimpleInterval(0, 0)}).as_composite_set()
         event = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()
         union = empty_event.union_with(event)
         self.assertEqual(union, event)
 
+    def test_union_different_variables(self):
+        event_1 = SimpleEvent({self.x: SimpleInterval(0, 1)}).as_composite_set()
+        event_2 = SimpleEvent({self.y: SimpleInterval(0, 1)}).as_composite_set()
+        union = event_1.union_with(event_2)
+        print(union)
+        # self.assertEqual(union, Event(event_1, event_2))
 
 if __name__ == '__main__':
     unittest.main()

@@ -160,6 +160,8 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         if len(self.variables) < len(other.variables):
             return True
         for variable in self.variables:
+            if variable not in other:
+                return True
             if self[variable] == other[variable]:
                 continue
             else:
