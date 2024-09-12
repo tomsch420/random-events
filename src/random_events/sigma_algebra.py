@@ -155,6 +155,10 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         :param other: The other set
         :return: The union of this set with the other set
         """
+        if other.is_empty():
+            return self
+        if self.is_empty():
+            return other
         result = self.new_empty_set()
         result.simple_sets.update(self.simple_sets)
         result.simple_sets.update(other.simple_sets)
@@ -281,7 +285,7 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         """
         Check if this set is empty.
         """
-        return len(self.simple_sets) == 0
+        return len(self.simple_sets) == 0 or all(simple_set.is_empty() for simple_set in self.simple_sets)
 
     def contains(self, item) -> bool:
         """

@@ -135,5 +135,18 @@ class NoneTypeObjectInDifferenceTestCase(unittest.TestCase):
         self.assertEqual(union, union_by_hand)
 
 
+class OperationsWithEmptySetsTestCase(unittest.TestCase):
+
+    x: Continuous = Continuous("x")
+    y: Continuous = Continuous("y")
+    a: Symbolic = Symbolic("a", TestEnum)
+
+    def test_union(self):
+        empty_event = SimpleEvent({self.x: SimpleInterval(0, 0), self.y: SimpleInterval(0, 0)}).as_composite_set()
+        event = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()
+        union = empty_event.union_with(event)
+        self.assertEqual(union, event)
+
+
 if __name__ == '__main__':
     unittest.main()
