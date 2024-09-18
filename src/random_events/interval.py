@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import enum
 import math
 from dataclasses import dataclass
@@ -8,7 +9,6 @@ from sortedcontainers import SortedSet
 from typing_extensions import Self
 
 from . import sigma_algebra
-from .sigma_algebra import AbstractCompositeSet
 
 
 class Bound(enum.Enum):
@@ -238,6 +238,7 @@ class Interval(sigma_algebra.AbstractCompositeSet):
 def open(left: float, right: float) -> Interval:
     """
     Creates an open interval.
+
     :param left: The left bound of the interval.
     :param right: The right bound of the interval.
     :return: The open interval.
@@ -248,6 +249,7 @@ def open(left: float, right: float) -> Interval:
 def closed(left: float, right: float) -> Interval:
     """
     Creates a closed interval.
+
     :param left: The left bound of the interval.
     :param right: The right bound of the interval.
     :return: The closed interval.
@@ -258,6 +260,7 @@ def closed(left: float, right: float) -> Interval:
 def open_closed(left: float, right: float) -> Interval:
     """
     Creates an open-closed interval.
+
     :param left: The left bound of the interval.
     :param right: The right bound of the interval.
     :return: The open-closed interval.
@@ -268,6 +271,7 @@ def open_closed(left: float, right: float) -> Interval:
 def closed_open(left: float, right: float) -> Interval:
     """
     Creates a closed-open interval.
+
     :param left: The left bound of the interval.
     :param right: The right bound of the interval.
     :return: The closed-open interval.
@@ -278,6 +282,7 @@ def closed_open(left: float, right: float) -> Interval:
 def singleton(value: float) -> Interval:
     """
     Creates a singleton interval.
+
     :param value: The value of the interval.
     :return: The singleton interval.
     """
@@ -287,6 +292,7 @@ def singleton(value: float) -> Interval:
 def reals() -> Interval:
     """
     Creates the set of real numbers.
+
     :return: The set of real numbers.
     """
     return SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN).as_composite_set()
