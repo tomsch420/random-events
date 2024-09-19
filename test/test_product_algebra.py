@@ -115,6 +115,15 @@ class EventTestCase(unittest.TestCase):
         event_ = AbstractSimpleSet.from_json(event.to_json())
         self.assertEqual(event_, event)
 
+    def test_bounding_box(self):
+        event_1 = SimpleEvent({self.x: closed(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()
+        event_2 = SimpleEvent({self.x: closed(1, 2), self.y: Interval(SimpleInterval(3, 4))}).as_composite_set()
+        event = event_1 | event_2
+        bounding_box = event.bounding_box()
+        result = SimpleEvent({self.x: closed(0, 2),
+                              self.y: SimpleInterval(0, 1).as_composite_set() | SimpleInterval(3, 4).as_composite_set()})
+        self.assertEqual(bounding_box, result)
+
 
 class NoneTypeObjectInDifferenceTestCase(unittest.TestCase):
     x: Continuous = Continuous("x")

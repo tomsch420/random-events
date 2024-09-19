@@ -429,6 +429,23 @@ class Event(AbstractCompositeSet):
             result.add_simple_set(simple_set.marginal(variables))
         return result.make_disjoint()
 
+    def bounding_box(self) -> SimpleEvent:
+        """
+        Compute the bounding box of the event.
+        The bounding box is the smallest simple event that contains this event. It is computed by taking the union
+        of all simple events variable wise.
+
+        :return: The bounding box as a simple event
+        """
+        result = SimpleEvent()
+        for variable in self.all_variables:
+            for simple_set in self.simple_sets:
+                if variable not in result:
+                    result[variable] = simple_set[variable]
+                else:
+                    result[variable] = result[variable].union_with(simple_set[variable])
+        return result
+
     def plot(self, color="#636EFA") -> Union[List[go.Scatter], List[go.Mesh3d]]:
         """
         Plot the complex event.
