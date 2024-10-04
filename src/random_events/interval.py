@@ -181,6 +181,9 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
 
         yield from range(rounded_lower, rounded_upper + 1)
 
+    def __deepcopy__(self):
+        return self.__class__(self.lower, self.upper, self.left, self.right)
+
 
 class Interval(sigma_algebra.AbstractCompositeSet):
     simple_sets: SortedSet[SimpleInterval]

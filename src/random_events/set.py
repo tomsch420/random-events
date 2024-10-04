@@ -78,6 +78,9 @@ class SetElement(AbstractSimpleSet, int, enum.Enum):
         return Set(self)
 
 
+    def __deepcopy__(self):
+        return self.__class__(self.value)
+
 class Set(AbstractCompositeSet):
     simple_sets: SetElementContainer
 

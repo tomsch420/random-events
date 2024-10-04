@@ -326,6 +326,9 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
             if variable not in self:
                 self[variable] = variable.domain
 
+    def __deepcopy__(self):
+        return self.__class__({variable: assignment.__deepcopy__() for variable, assignment in self.items()})
+
 
 class Event(AbstractCompositeSet):
     """
@@ -441,9 +444,9 @@ class Event(AbstractCompositeSet):
         for variable in self.all_variables:
             for simple_set in self.simple_sets:
                 if variable not in result:
-                    result[variable] = simple_set[variable]
+                    result[variable] = simple_set[variable].__deepcopy__()
                 else:
-                    result[variable] = result[variable].union_with(simple_set[variable])
+                    result[variable] = result[variable].union_with(simple_set[variable].__deepcopy__())
         return result
 
     def plot(self, color="#636EFA") -> Union[List[go.Scatter], List[go.Mesh3d]]:

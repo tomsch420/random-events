@@ -114,6 +114,10 @@ class AbstractSimpleSet(SubclassJSONSerializer):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def __deepcopy__(self):
+        raise NotImplementedError
+
 
 class AbstractCompositeSet(SubclassJSONSerializer):
     """
@@ -454,6 +458,9 @@ class AbstractCompositeSet(SubclassJSONSerializer):
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
         return cls(*[AbstractSimpleSet.from_json(simple_set) for simple_set in data["simple_sets"]])
+
+    def __deepcopy__(self):
+        return self.__class__(*[ss.__deepcopy__() for ss in self.simple_sets])
 
 
 # Type definitions

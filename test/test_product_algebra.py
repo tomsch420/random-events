@@ -119,11 +119,23 @@ class EventTestCase(unittest.TestCase):
         event_1 = SimpleEvent({self.x: closed(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()
         event_2 = SimpleEvent({self.x: closed(1, 2), self.y: Interval(SimpleInterval(3, 4))}).as_composite_set()
         event = event_1 | event_2
+
+        event_before_bounding_box = event.__deepcopy__()
         bounding_box = event.bounding_box()
         result = SimpleEvent({self.x: closed(0, 2),
                               self.y: SimpleInterval(0, 1).as_composite_set() | SimpleInterval(3, 4).as_composite_set()})
         self.assertEqual(bounding_box, result)
+        self.assertEqual(event, event_before_bounding_box)
 
+    def test_complex_event_bounding_box_with_references(self):
+        event1 = SimpleEvent({self.x: closed(0, 1) |  closed(2, 3),
+                             self.y: closed(0, 1) |  closed(2, 3)}).as_composite_set()
+        event2 = SimpleEvent({self.x: closed(1, 2) |  closed(3, 4),
+                             self.y: closed(1, 2) |  closed(3, 4)}).as_composite_set()
+        event = event1 | event2
+        event_before_bb = event.__deepcopy__()
+        bb = event.bounding_box()
+        self.assertEqual(event, event_before_bb)
 
 class NoneTypeObjectInDifferenceTestCase(unittest.TestCase):
     x: Continuous = Continuous("x")
