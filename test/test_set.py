@@ -45,6 +45,11 @@ class SetElementTestCase(unittest.TestCase):
         b = AbstractSimpleSet.from_json(a.to_json())
         self.assertEqual(a, b)
 
+    def test_copy(self):
+        a = TestEnum.A
+        b = a.__deepcopy__()
+        self.assertEqual(a, b)
+
 
 class SetTestCase(unittest.TestCase):
 
