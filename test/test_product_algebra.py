@@ -172,8 +172,13 @@ class OperationsWithEmptySetsTestCase(unittest.TestCase):
         event_1 = SimpleEvent({self.x: SimpleInterval(0, 1)}).as_composite_set()
         event_2 = SimpleEvent({self.y: SimpleInterval(0, 1)}).as_composite_set()
         union = event_1.union_with(event_2)
-        print(union)
         # self.assertEqual(union, Event(event_1, event_2))
+
+    def test_difference_with_empty_set(self):
+        event = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()
+        empty_event = Event()
+        diff = event.difference_with(empty_event)
+        self.assertEqual(diff, event)
 
 if __name__ == '__main__':
     unittest.main()

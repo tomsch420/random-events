@@ -217,6 +217,9 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
     def difference_with_simple_sets(self, other: SimpleSetContainer) -> Self:
 
+        if len(other) == 0:
+            return self
+
         # initialize the result
         result = self.new_empty_set()
 
