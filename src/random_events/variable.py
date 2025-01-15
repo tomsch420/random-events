@@ -1,10 +1,11 @@
 from abc import abstractmethod
+import random_events_lib as rl
 
 from typing_extensions import Self, Type, Dict, Any, Union, Optional
 
 from .interval import Interval, reals
 from .set import Set, SetElement
-from .sigma_algebra import AbstractCompositeSet
+from .sigma_algebra import AbstractCompositeSet, EMPTY_SET_SYMBOL
 from .utils import SubclassJSONSerializer
 
 
@@ -59,6 +60,16 @@ class Variable(SubclassJSONSerializer):
         """
         raise NotImplementedError
 
+    @classmethod
+    @abstractmethod
+    def _from_cpp(cls, cpp_object):
+        if type(cpp_object) == rl.Symbolic:
+            return Symbolic._from_cpp(cpp_object)
+        elif type(cpp_object) == rl.Continuous:
+            return Continuous._from_cpp(cpp_object)
+        elif type(cpp_object) == rl.Integer:
+            return Integer._from_cpp(cpp_object)
+
 
 class Continuous(Variable):
     """
@@ -71,9 +82,15 @@ class Continuous(Variable):
     def __init__(self, name: str, domain=None):
         super().__init__(name, reals())
 
+        self._cpp_object = rl.Continuous(self.name)
+
     @property
     def is_numeric(self):
         return True
+
+    @classmethod
+    def _from_cpp(cls, cpp_object):
+        return cls(cpp_object.name)
 
 
 class Symbolic(Variable):
@@ -94,15 +111,14 @@ class Symbolic(Variable):
         if domain is None:
             raise ValueError("The domain of a symbolic variable must be specified.")
 
-        if isinstance(domain, Set):
-            domain = domain.simple_sets[0].__class__
+        if isinstance(domain, set):
+            self.domain = Set(*[SetElement(value, domain) for value in domain if value != EMPTY_SET_SYMBOL])
+        else:
+            self.domain = domain
 
-        assert isinstance(domain, type) and issubclass(domain, SetElement), ("The domain must be a subclass of "
-                                                                             "SetElement.")
-        if name is None:
-            name = domain.__name__
+        super().__init__(name, self.domain)
 
-        super().__init__(name, Set(*[value for value in domain if value != domain.EMPTY_SET]))
+        self._cpp_object = rl.Symbolic(self.name, self.domain._cpp_object)
 
     def domain_type(self) -> Type[SetElement]:
         return self.domain.simple_sets[0].all_elements
@@ -110,6 +126,10 @@ class Symbolic(Variable):
     @property
     def is_numeric(self):
         return False
+
+    @classmethod
+    def _from_cpp(cls, cpp_object):
+        return cls(cpp_object.name, Set._from_cpp(cpp_object.get_domain()))
 
 
 class Integer(Variable):
@@ -123,6 +143,12 @@ class Integer(Variable):
     def __init__(self, name: str, domain=None):
         super().__init__(name, reals())
 
+        self._cpp_object = rl.Integer(self.name)
+
     @property
     def is_numeric(self):
         return True
+
+    @classmethod
+    def _from_cpp(cls, cpp_object):
+        return cls(cpp_object.name)

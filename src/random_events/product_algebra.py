@@ -1,5 +1,7 @@
 from __future__ import annotations
 import numpy as np
+import itertools
+from random_events.interval import SimpleInterval
 from sortedcontainers import SortedDict, SortedKeysView, SortedValuesView
 from typing_extensions import List, TYPE_CHECKING
 import plotly.graph_objects as go
@@ -68,76 +70,27 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         for key, value in self.items():
             self[key] = value
 
+        self._cpp_object = rl.SimpleEvent({variable._cpp_object: value._cpp_object for variable, value in self.items()})
+
+    @classmethod
+    def _from_cpp(cls, cpp_object):
+        x = cpp_object.variable_map.items()
+        result = {}
+        for variable, value in x:
+            variable_back = Variable._from_cpp(variable)
+            if isinstance(variable_back, Continuous):
+                value_back = Interval._from_cpp(value)
+            else:
+                value_back = Set._from_cpp(value)
+            result[variable_back] = value_back
+        return cls(result)
+
     def as_composite_set(self) -> Event:
         return Event(self)
 
     @property
     def assignments(self) -> SortedValuesView:
         return self.values()
-
-    def intersection_with(self, other: Self) -> Self:
-        variables = self.keys() | other.keys()
-        result = SimpleEvent()
-        for variable in variables:
-            if variable in self and variable in other:
-                result[variable] = self[variable].intersection_with(other[variable])
-            elif variable in self:
-                result[variable] = self[variable]
-            else:
-                result[variable] = other[variable]
-
-        return result
-
-    def complement(self) -> SimpleSetContainer:
-
-        # initialize result
-        result = SortedSet()
-
-        # initialize variables where the complement has already been computed
-        processed_variables = []
-
-        # for every key, value pair
-        for variable, assignment in self.items():
-
-            # initialize the current complement
-            current_complement = SimpleEvent()
-
-            # set the current variable to its complement
-            current_complement[variable] = assignment.complement()
-
-            # for every other variable
-            for other_variable in self.variables:
-
-                # skip this iteration if the other variable is the same as the current one
-                if other_variable == variable:
-                    continue
-
-                # if it has been processed, set copy its assignment from this
-                if other_variable in processed_variables:
-                    current_complement[other_variable] = self[other_variable]
-
-                # otherwise, set it to its domain (set of all values)
-                else:
-                    current_complement[other_variable] = other_variable.domain
-
-            # memorize the processed variables
-            processed_variables.append(variable)
-
-            # if the current complement is not empty, add it to the result
-            if not current_complement.is_empty():
-                result.add(current_complement)
-
-        return result
-
-    def is_empty(self) -> bool:
-        if len(self.keys()) == 0:
-            return True
-
-        for assignment in self.values():
-            if assignment.is_empty():
-                return True
-
-        return False
 
     def contains(self, item: Tuple) -> bool:
         for assignment, value in zip(self.assignments, item):
@@ -345,6 +298,12 @@ class Event(AbstractCompositeSet):
         super().__init__(*simple_sets)
         self.fill_missing_variables()
 
+        self._cpp_object = rl.Event({simple_set._cpp_object for simple_set in self.simple_sets})
+
+    @classmethod
+    def _from_cpp(cls, cpp_object):
+        return cls(*[SimpleEvent._from_cpp(cpp_simple_set) for cpp_simple_set in cpp_object.simple_sets])
+
     @property
     def all_variables(self) -> VariableSet:
         result = SortedSet()
@@ -358,61 +317,14 @@ class Event(AbstractCompositeSet):
         for simple_set in self.simple_sets:
             simple_set.fill_missing_variables(all_variables)
 
-    def simplify(self) -> Self:
-        simplified, changed = self.simplify_once()
-        while changed:
-            simplified, changed = simplified.simplify_once()
-        return simplified
-
     def simplify_once(self) -> Tuple[Self, bool]:
         """
         Simplify the event once. This simplification is not guaranteed to as simple as possible.
 
         :return: The simplified event and a boolean indicating whether the event has changed or not.
         """
-
-        for event_a, event_b in itertools.combinations(self.simple_sets, 2):
-            different_variables = SortedSet()
-
-            # get all events where these two events differ
-            for variable in event_a.variables:
-                if event_a[variable] != event_b[variable]:
-                    different_variables.add(variable)
-
-                # if the pair of simple events mismatches in more than one dimension it cannot be simplified
-                if len(different_variables) > 1:
-                    break
-
-            # if the pair of simple events mismatches in more than one dimension skip it
-            if len(different_variables) > 1:
-                continue
-
-            # get the dimension where the two events differ
-            different_variable = different_variables[0]
-
-            # initialize the simplified event
-            simplified_event = SimpleEvent()
-
-            # for every variable
-            for variable in event_a.variables:
-
-                # if the variable is the one where the two events differ
-                if variable == different_variable:
-                    # set it to the union of the two events
-                    simplified_event[variable] = event_a[variable].union_with(event_b[variable])
-
-                # if the variable has the same assignment
-                else:
-                    # copy to the simplified event
-                    simplified_event[variable] = event_a[variable]
-
-            # create a new event with the simplified event and all other events
-            result = Event(
-                *([simplified_event] + [event for event in self.simple_sets if event != event_a and event != event_b]))
-            return result, True
-
-        # if nothing happened, return the original event and False
-        return self, False
+        simplified = self._cpp_object.simplify_once()
+        return self._from_cpp(simplified[0]), simplified[1]
 
     def new_empty_set(self) -> Self:
         return Event()
@@ -422,6 +334,7 @@ class Event(AbstractCompositeSet):
 
     def marginal(self, variables: VariableSet) -> Event:
         """
+        TODO: Something wrong with add_simple_set
         Create the marginal event, that only contains the variables given..
 
         :param variables: The variables to contain in the marginal event

@@ -1,11 +1,14 @@
 from __future__ import annotations
+
 import enum
 import math
+from dataclasses import dataclass
 from typing import Dict, Any
+
 from sortedcontainers import SortedSet
 from typing_extensions import Self
-from . import sigma_algebra
-import random_events_lib as rl
+
+from random_events.before_bindings import sigma_algebra_old
 
 
 class Bound(enum.Enum):
@@ -36,7 +39,8 @@ class Bound(enum.Enum):
         return Bound.OPEN if self == Bound.OPEN or other == Bound.OPEN else Bound.CLOSED
 
 
-class SimpleInterval(sigma_algebra.AbstractSimpleSet):
+@dataclass
+class SimpleInterval(sigma_algebra_old.AbstractSimpleSet):
     """
     Represents a simple interval.
     """
@@ -61,18 +65,6 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     The bound type of the upper bound.
     """
 
-    def __init__(self, lower: float = 0, upper: float = 0, left: Bound = Bound.OPEN, right: Bound = Bound.OPEN):
-        self.lower = lower
-        self.upper = upper
-        self.left = left
-        self.right = right
-
-        self._cpp_object = rl.SimpleInterval(lower, upper, left.value, right.value)
-
-    @classmethod
-    def _from_cpp(cls, cpp_object: rl.SimpleInterval) -> Self:
-        return cls(cpp_object.lower, cpp_object.upper, Bound(cpp_object.left.value), Bound(cpp_object.right.value))
-
     def as_composite_set(self) -> Interval:
         return Interval(self)
 
@@ -81,14 +73,66 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
             return self.upper < other.upper
         return self.lower < other.lower
 
-    def __eq__(self, other: Self):
-        return self.lower == other.lower and self.upper == other.upper and self.left == other.left and self.right == other.right
+    def is_empty(self) -> bool:
+        return self.lower > self.upper or (
+                self.lower == self.upper and (self.left == Bound.OPEN or self.right == Bound.OPEN))
 
     def is_singleton(self) -> bool:
         """
         :return: True if the interval is a singleton (contains only one value), False otherwise.
         """
         return self.lower == self.upper and self.left == Bound.CLOSED and self.right == Bound.CLOSED
+
+    def intersection_with(self, other: Self) -> Self:
+
+        # create new limits for the intersection
+        new_lower = max(self.lower, other.lower)
+        new_upper = min(self.upper, other.upper)
+
+        # if the new limits are not valid, return an empty interval
+        if new_lower > new_upper:
+            return SimpleInterval()
+
+        # create the new left bound
+        if self.lower == other.lower:
+            new_left = self.left.intersect(other.left)
+        else:
+            new_left = self.left if self.lower > other.lower else other.left
+
+        # create the new right bound
+        if self.upper == other.upper:
+            new_right = self.right.intersect(other.right)
+        else:
+            new_right = self.right if self.upper < other.upper else other.right
+
+        return SimpleInterval(new_lower, new_upper, new_left, new_right)
+
+    def complement(self) -> SortedSet[Self]:
+
+        # if the interval is empty
+        if self.is_empty():
+            # return the real line
+            return SortedSet([SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN)])
+
+        # initialize the result
+        result = SortedSet()
+
+        # if this is the real line
+        if self.lower == float('-inf') and self.upper == float('inf'):
+            # return the empty set
+            return result
+
+        # if the lower bound is not negative infinity
+        if self.lower > float('-inf'):
+            # add the interval from minus infinity to the lower bound
+            result.add(SimpleInterval(float('-inf'), self.lower, Bound.OPEN, self.left.invert()))
+
+        # if the upper bound is not positive infinity
+        if self.upper < float('inf'):
+            # add the interval from the upper bound to infinity
+            result.add(SimpleInterval(self.upper, float('inf'), self.right.invert(), Bound.OPEN))
+
+        return result
 
     def contains(self, item: float) -> bool:
         return (self.lower < item < self.upper or (self.lower == item and self.left == Bound.CLOSED) or (
@@ -103,10 +147,10 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         return f'{left_bracket}{self.lower}, {self.upper}{right_bracket}'
 
     def __repr__(self):
-        return sigma_algebra.AbstractSimpleSet.to_string(self)
+        return sigma_algebra_old.AbstractSimpleSet.to_string(self)
 
     def __str__(self):
-        return sigma_algebra.AbstractSimpleSet.to_string(self)
+        return sigma_algebra_old.AbstractSimpleSet.to_string(self)
 
     def to_json(self) -> Dict[str, Any]:
         return {**super().to_json(), 'lower': self.lower, 'upper': self.upper, 'left': self.left.name,
@@ -141,16 +185,38 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         return self.__class__(self.lower, self.upper, self.left, self.right)
 
 
-class Interval(sigma_algebra.AbstractCompositeSet):
+class Interval(sigma_algebra_old.AbstractCompositeSet):
     simple_sets: SortedSet[SimpleInterval]
 
-    def __init__(self, *simple_sets):
-        super().__init__(*simple_sets)
-        self._cpp_object = rl.Interval({simple_set._cpp_object for simple_set in self.simple_sets})
+    def simplify(self) -> Self:
 
-    @classmethod
-    def _from_cpp(cls, cpp_object: rl.Interval) -> Self:
-        return cls(*[SimpleInterval._from_cpp(cpp_simple_interval) for cpp_simple_interval in cpp_object.simple_sets])
+        # if the set is empty, return it
+        if self.is_empty():
+            return self
+
+        # initialize the result
+        result = self.simple_sets[0].as_composite_set()
+
+        # iterate over the simple sets
+        for current_simple_interval in self.simple_sets[1:]:
+
+            # get the last element in the result
+            last_simple_interval = result.simple_sets[-1]
+
+            # if the borders are connected
+            if (last_simple_interval.upper > current_simple_interval.lower or (
+                    last_simple_interval.upper == current_simple_interval.lower and not (
+                    last_simple_interval.right == Bound.OPEN and current_simple_interval.left == Bound.OPEN))):
+
+                # extend the upper bound of the last element
+                last_simple_interval.upper = current_simple_interval.upper
+                last_simple_interval.right = current_simple_interval.right
+            else:
+
+                # add the current element to the result
+                result.simple_sets.add(current_simple_interval)
+
+        return result
 
     def new_empty_set(self) -> Self:
         return Interval()
@@ -180,7 +246,7 @@ def open(left: float, right: float) -> Interval:
     :param right: The right bound of the interval.
     :return: The open interval.
     """
-    return Interval._from_cpp(rl.open(left, right))
+    return SimpleInterval(left, right, Bound.OPEN, Bound.OPEN).as_composite_set()
 
 
 def closed(left: float, right: float) -> Interval:
@@ -191,7 +257,7 @@ def closed(left: float, right: float) -> Interval:
     :param right: The right bound of the interval.
     :return: The closed interval.
     """
-    return Interval._from_cpp(rl.closed(left, right))
+    return SimpleInterval(left, right, Bound.CLOSED, Bound.CLOSED).as_composite_set()
 
 
 def open_closed(left: float, right: float) -> Interval:
@@ -202,7 +268,7 @@ def open_closed(left: float, right: float) -> Interval:
     :param right: The right bound of the interval.
     :return: The open-closed interval.
     """
-    return Interval._from_cpp(rl.open_closed(left, right))
+    return SimpleInterval(left, right, Bound.OPEN, Bound.CLOSED).as_composite_set()
 
 
 def closed_open(left: float, right: float) -> Interval:
@@ -213,7 +279,7 @@ def closed_open(left: float, right: float) -> Interval:
     :param right: The right bound of the interval.
     :return: The closed-open interval.
     """
-    return Interval._from_cpp(rl.closed_open(left, right))
+    return SimpleInterval(left, right, Bound.CLOSED, Bound.OPEN).as_composite_set()
 
 
 def singleton(value: float) -> Interval:
@@ -223,7 +289,7 @@ def singleton(value: float) -> Interval:
     :param value: The value of the interval.
     :return: The singleton interval.
     """
-    return Interval._from_cpp(rl.singleton(value))
+    return SimpleInterval(value, value, Bound.CLOSED, Bound.CLOSED).as_composite_set()
 
 
 def reals() -> Interval:
@@ -232,4 +298,4 @@ def reals() -> Interval:
 
     :return: The set of real numbers.
     """
-    return Interval._from_cpp(rl.reals())
+    return SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN).as_composite_set()
