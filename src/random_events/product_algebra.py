@@ -74,9 +74,9 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
 
     @classmethod
     def _from_cpp(cls, cpp_object):
-        x = cpp_object.variable_map.items()
+        variables = cpp_object.variable_map.items()
         result = {}
-        for variable, value in x:
+        for variable, value in variables:
             variable_back = Variable._from_cpp(variable)
             if isinstance(variable_back, Continuous):
                 value_back = Interval._from_cpp(value)
@@ -127,10 +127,12 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         :param variables: The variables to contain in the marginal event
         :return: The marginal event
         """
-        result = self.__class__()
-        for variable in variables:
-            result[variable] = self[variable]
-        return result
+        return self._from_cpp(self._cpp_object.marginal({variable._cpp_object for variable in variables}))
+        # result = self.__class__()
+        # for variable in variables:
+        #     result[variable] = self[variable]
+        # for_cpp = self.__class__(result)
+        # return for_cpp
 
     def non_empty_to_string(self) -> str:
         return "{" + ", ".join(f"{variable.name} = {assignment}" for variable, assignment in self.items()) + "}"
@@ -278,6 +280,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         for variable in variables:
             if variable not in self:
                 self[variable] = variable.domain
+                self._cpp_object[variable._cpp_object] = variable.domain._cpp_object
 
     def __deepcopy__(self):
         return self.__class__({variable: assignment.__deepcopy__() for variable, assignment in self.items()})
@@ -340,10 +343,13 @@ class Event(AbstractCompositeSet):
         :param variables: The variables to contain in the marginal event
         :return: The marginal event
         """
-        result = self.__class__()
-        for simple_set in self.simple_sets:
-            result.add_simple_set(simple_set.marginal(variables))
-        return result.make_disjoint()
+        return self._from_cpp(self._cpp_object.marginal({variable._cpp_object for variable in variables}))
+        # result = self.__class__()
+        # for simple_set in self.simple_sets:
+        #     result.add_simple_set(simple_set.marginal(variables))
+        # updated_result = self.__class__(*result.simple_sets)
+        # y = updated_result.make_disjoint()
+        # return y
 
     def bounding_box(self) -> SimpleEvent:
         """

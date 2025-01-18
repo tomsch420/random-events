@@ -105,7 +105,8 @@ class EventTestCase(unittest.TestCase):
         event_2 = SimpleEvent({self.x: Interval(SimpleInterval(1, 2)), self.y: Interval(SimpleInterval(1, 2))})
         event = Event(event_1, event_2)
         fig = go.Figure(event.plot(), event.plotly_layout())
-        self.assertIsNotNone(fig)  # fig.show()
+        self.assertIsNotNone(fig)
+        # fig.show()
 
     def test_plot_3d(self):
         event_1 = SimpleEvent(
@@ -114,7 +115,8 @@ class EventTestCase(unittest.TestCase):
             {self.x: SimpleInterval(1, 2), self.y: SimpleInterval(1, 2), self.z: SimpleInterval(1, 2)})
         event = Event(event_1, event_2)
         fig = go.Figure(event.plot(), event.plotly_layout())
-        self.assertIsNotNone(fig)  # fig.show()
+        self.assertIsNotNone(fig)
+        # fig.show()
 
     def test_union(self):
         sa = SetElement("a", str_set)
@@ -204,7 +206,7 @@ class OperationsWithEmptySetsTestCase(unittest.TestCase):
         event_1 = SimpleEvent({self.x: SimpleInterval(0, 1)}).as_composite_set()
         event_2 = SimpleEvent({self.y: SimpleInterval(0, 1)}).as_composite_set()
         union = event_1.union_with(event_2)
-        # self.assertEqual(union, Event(event_1, event_2))
+        self.assertEqual(union, Event(event_1, event_2))
 
     def test_difference_with_empty_set(self):
         event = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()
