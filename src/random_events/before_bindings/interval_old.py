@@ -8,7 +8,7 @@ from typing import Dict, Any
 from sortedcontainers import SortedSet
 from typing_extensions import Self
 
-from random_events.before_bindings import sigma_algebra_old
+from random_events.before_bindings.sigma_algebra_old import *
 
 
 class Bound(enum.Enum):
@@ -40,7 +40,7 @@ class Bound(enum.Enum):
 
 
 @dataclass
-class SimpleInterval(sigma_algebra_old.AbstractSimpleSet):
+class SimpleInterval(AbstractSimpleSet):
     """
     Represents a simple interval.
     """
@@ -147,10 +147,10 @@ class SimpleInterval(sigma_algebra_old.AbstractSimpleSet):
         return f'{left_bracket}{self.lower}, {self.upper}{right_bracket}'
 
     def __repr__(self):
-        return sigma_algebra_old.AbstractSimpleSet.to_string(self)
+        return AbstractSimpleSet.to_string(self)
 
     def __str__(self):
-        return sigma_algebra_old.AbstractSimpleSet.to_string(self)
+        return AbstractSimpleSet.to_string(self)
 
     def to_json(self) -> Dict[str, Any]:
         return {**super().to_json(), 'lower': self.lower, 'upper': self.upper, 'left': self.left.name,
@@ -185,7 +185,7 @@ class SimpleInterval(sigma_algebra_old.AbstractSimpleSet):
         return self.__class__(self.lower, self.upper, self.left, self.right)
 
 
-class Interval(sigma_algebra_old.AbstractCompositeSet):
+class Interval(AbstractCompositeSet):
     simple_sets: SortedSet[SimpleInterval]
 
     def simplify(self) -> Self:
