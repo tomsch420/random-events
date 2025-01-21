@@ -2,4 +2,3 @@ numpy
 plotly
 typing_extensions
 sortedcontainers
--e src/random-events-lib
