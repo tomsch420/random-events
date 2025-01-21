@@ -5,14 +5,15 @@ import random_events_lib as rl
 
 class SetElement(AbstractSimpleSet):
     """
-    Base class for enums that are used as elements in a set.
-
-    Classes that inherit from this class have to define an attribute called EMPTY_SET.
-    It is advisable to define EMPTY_SET as -1 to correctly work with indices.
-    The empty set of the class is used to access all other elements of the class.
+    Represents a SetElement.
     """
 
     def __init__(self, element: str, all_elements: set):
+        """
+        Create a new set element.
+        :param element: The element of the set.
+        :param all_elements: The set of all elements.
+        """
         self.all_elements = SortedSet(all_elements)
         if element == EMPTY_SET_SYMBOL or element == -1:
             self.element = EMPTY_SET_SYMBOL
@@ -62,10 +63,22 @@ class SetElement(AbstractSimpleSet):
     def as_composite_set(self) -> AbstractCompositeSet:
         return Set(self)
 
+
 class Set(AbstractCompositeSet):
+    """
+    Represents a set.
+    """
+
     simple_sets: SetElementContainer
+    """
+    The simple sets that make up the set.
+    """
 
     def __init__(self, *simple_sets):
+        """
+        Create a new set.
+        :param simple_sets: The simple sets that make up the set.
+        """
         super().__init__(*simple_sets)
         if len(simple_sets) > 0:
             self._cpp_object = rl.Set({simple_set._cpp_object for simple_set in self.simple_sets},

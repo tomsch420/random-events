@@ -62,6 +62,13 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     """
 
     def __init__(self, lower: float = 0, upper: float = 0, left: Bound = Bound.OPEN, right: Bound = Bound.OPEN):
+        """
+        Creates a new simple interval.
+        :param lower: The lower bound of the interval.
+        :param upper: The upper bound of the interval.
+        :param left: The bound type of the lower bound.
+        :param right: The bound type of the upper bound.
+        """
         self.lower = lower
         self.upper = upper
         self.left = left
@@ -142,9 +149,16 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
 
 
 class Interval(sigma_algebra.AbstractCompositeSet):
+    """
+    Represents an interval.
+    """
     simple_sets: SortedSet[SimpleInterval]
 
     def __init__(self, *simple_sets):
+        """
+        Creates a new interval.
+        :param simple_sets: The simple intervals that make up the interval.
+        """
         super().__init__(*simple_sets)
         self._cpp_object = rl.Interval({simple_set._cpp_object for simple_set in self.simple_sets})
 

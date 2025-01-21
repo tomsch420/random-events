@@ -66,6 +66,10 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Create a new simple event.
+        :param args: The assignments of variables to values
+        """
         VariableMap.__init__(self, *args, **kwargs)
         for key, value in self.items():
             self[key] = value
@@ -128,11 +132,6 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         :return: The marginal event
         """
         return self._from_cpp(self._cpp_object.marginal({variable._cpp_object for variable in variables}))
-        # result = self.__class__()
-        # for variable in variables:
-        #     result[variable] = self[variable]
-        # for_cpp = self.__class__(result)
-        # return for_cpp
 
     def non_empty_to_string(self) -> str:
         return "{" + ", ".join(f"{variable.name} = {assignment}" for variable, assignment in self.items()) + "}"
@@ -296,8 +295,15 @@ class Event(AbstractCompositeSet):
     """
 
     simple_sets: SimpleEventContainer
+    """
+    The simple events that make up the event.
+    """
 
     def __init__(self, *simple_sets):
+        """
+        Create a new event.
+        :param simple_sets: The simple events that make up the event.
+        """
         super().__init__(*simple_sets)
         self.fill_missing_variables()
 
@@ -344,12 +350,6 @@ class Event(AbstractCompositeSet):
         :return: The marginal event
         """
         return self._from_cpp(self._cpp_object.marginal({variable._cpp_object for variable in variables}))
-        # result = self.__class__()
-        # for simple_set in self.simple_sets:
-        #     result.add_simple_set(simple_set.marginal(variables))
-        # updated_result = self.__class__(*result.simple_sets)
-        # y = updated_result.make_disjoint()
-        # return y
 
     def bounding_box(self) -> SimpleEvent:
         """

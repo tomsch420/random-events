@@ -5,14 +5,7 @@ import unittest
 from random_events.sigma_algebra import AbstractSimpleSet
 
 
-class TestEnum(SetElement):
-    EMPTY_SET = -1
-    A = 1
-    B = 2
-    C = 4
-
 str_set = {'a', 'c', 'b'}
-# int_set = {1, 3, 2}
 
 EMPTY_SET = SetElement(EMPTY_SET_SYMBOL, set())
 

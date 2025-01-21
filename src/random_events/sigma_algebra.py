@@ -16,7 +16,11 @@ class AbstractSimpleSet(SubclassJSONSerializer):
     Simple sets are sets that can be represented as a single object.
     """
 
+    @abstractmethod
     def __init__(self):
+        """
+        Create a new simple set.
+        """
         self._cpp_object = rl.AbstractSimpleSet
 
     @abstractmethod
@@ -263,92 +267,6 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         :return: Rather if the simple sets are disjoint or not.
         """
         return self._cpp_object.is_disjoint()
-
-    def split_into_disjoint_and_non_disjoint_old(self) -> Tuple[Self, Self]:
-        """
-        TODO: REMOVE THIS METHOD
-        Split this composite set into disjoint and non-disjoint parts.
-
-        This method is required for making the composite set disjoint.
-        The partitioning is done by removing every other simple set from every simple set.
-        The purified simple sets are then disjoint by definition and the pairwise intersections are (potentially) not
-        disjoint yet.
-
-        This method requires:
-            - the intersection of two simple sets as a simple set
-            - the difference_of_a_with_every_b of a simple set (A) and another simple set (B) that is completely contained in A (B ⊆ A).
-            The result of that difference_of_a_with_every_b has to be a composite set with only one simple set in it.
-
-        :return: A tuple of the disjoint and non-disjoint set.
-        """
-
-        # initialize result for disjoint and non-disjoint sets
-        disjoint = self.new_empty_set()
-        non_disjoint = self.new_empty_set()
-
-        # for every simple set (a)
-        for simple_set_a in self.simple_sets:
-            simple_set_a: AbstractSimpleSet
-
-            # initialize the difference of a with every b
-            difference_of_a_with_every_b: Optional[AbstractCompositeSet] = self.new_empty_set()
-            difference_of_a_with_every_b.add_simple_set(simple_set_a)
-
-            # for every other simple set (b)
-            for simple_set_b in self.simple_sets:
-                simple_set_b: AbstractSimpleSet
-
-                # skip symmetric iterations
-                if simple_set_a == simple_set_b:
-                    continue
-
-                # get the intersection of a and b
-                intersection_a_b: AbstractSimpleSet = simple_set_a.intersection_with(simple_set_b)
-
-                # if the intersection is not empty, add it to the non-disjoint set
-                non_disjoint.add_simple_set(intersection_a_b)
-
-                # get the difference of the simple set with the intersection.
-                difference_with_intersection = difference_of_a_with_every_b.difference_with_simple_set(intersection_a_b)
-
-                # if the difference of a with every b is empty
-                if len(difference_with_intersection.simple_sets) == 0:
-                    # skip the rest of the loop and mark the set for discarding
-                    difference_of_a_with_every_b = None
-                    break
-
-                # add the disjoint remainder
-                difference_of_a_with_every_b = difference_with_intersection
-
-            # if the difference_of_a_with_every_b has become None
-            if difference_of_a_with_every_b is None:
-                # skip the rest of the loop
-                continue
-
-            # append the simple_set_a without every other simple set to the disjoint set
-            disjoint.simple_sets.update(difference_of_a_with_every_b.simple_sets)
-
-        return disjoint, non_disjoint
-
-    def make_disjoint_old(self) -> Self:
-        """
-        TODO: REMOVE THIS METHOD
-        Create an equal composite set that contains a disjoint union of simple sets.
-
-        :return: The disjoint set.
-        """
-
-        disjoint, intersection = self.split_into_disjoint_and_non_disjoint_old()
-
-        # while the intersection is not empty
-        while not intersection.is_empty():
-            # split the intersection into disjoint and non-disjoint parts
-            current_disjoint, intersection = intersection.split_into_disjoint_and_non_disjoint_old()
-
-            # add the disjoint intersection to the disjoint set
-            disjoint.simple_sets.update(current_disjoint.simple_sets)
-
-        return disjoint.simplify()
 
     def make_disjoint(self) -> Self:
         """

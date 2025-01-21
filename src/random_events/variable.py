@@ -10,10 +10,18 @@ from .utils import SubclassJSONSerializer
 
 
 class Variable(SubclassJSONSerializer):
+    """
+    Parent class for all random variables.
+    """
     name: str
     domain: AbstractCompositeSet
 
     def __init__(self, name: str, domain: AbstractCompositeSet):
+        """
+        Construct a new random variable.
+        :param name: The name of the variable.
+        :param domain: The domain of the variable.
+        """
         self.name = name
         self.domain = domain
 
@@ -77,9 +85,13 @@ class Continuous(Variable):
 
     The domain of a continuous variable is the real line.
     """
-    domain: Interval
 
-    def __init__(self, name: str, domain=None):
+    def __init__(self, name: str, domain: AbstractCompositeSet = reals()):
+        """
+        Construct a continuous variable.
+        :param name: The name.
+        :param domain: The domain of the variable.
+        """
         super().__init__(name, reals())
 
         self._cpp_object = rl.Continuous(self.name)
@@ -138,9 +150,13 @@ class Integer(Variable):
 
     The domain of an integer variable is the number line.
     """
-    domain: Interval
 
-    def __init__(self, name: str, domain=None):
+    def __init__(self, name: str, domain: AbstractCompositeSet = reals()):
+        """
+        Construct an integer variable.
+        :param name: The name.
+        :param domain: The domain of the variable.
+        """
         super().__init__(name, reals())
 
         self._cpp_object = rl.Integer(self.name)
