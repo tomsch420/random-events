@@ -76,18 +76,19 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
 
         self._cpp_object = rl.SimpleEvent({variable._cpp_object: value._cpp_object for variable, value in self.items()})
 
-    @classmethod
-    def _from_cpp(cls, cpp_object):
+    def _from_cpp(self, cpp_object):
         variables = cpp_object.variable_map.items()
         result = {}
+        og_variables = {v.name: v for v in self.variables}
         for variable, value in variables:
-            variable_back = Variable._from_cpp(variable)
-            if isinstance(variable_back, Continuous):
-                value_back = Interval._from_cpp(value)
-            else:
-                value_back = Set._from_cpp(value)
-            result[variable_back] = value_back
-        return cls(result)
+            original_variable = og_variables.get(variable.name)
+            if original_variable:
+                if isinstance(original_variable, Continuous):
+                    value_back = Interval._from_cpp(value)
+                else:
+                    value_back = Set._from_cpp(value)
+                result[original_variable] = value_back
+        return SimpleEvent(result)
 
     def as_composite_set(self) -> Event:
         return Event(self)
@@ -309,9 +310,8 @@ class Event(AbstractCompositeSet):
 
         self._cpp_object = rl.Event({simple_set._cpp_object for simple_set in self.simple_sets})
 
-    @classmethod
-    def _from_cpp(cls, cpp_object):
-        return cls(*[SimpleEvent._from_cpp(cpp_simple_set) for cpp_simple_set in cpp_object.simple_sets])
+    def _from_cpp(self, cpp_object):
+        return Event(*[self.simple_sets[0]._from_cpp(cpp_simple_set) for cpp_simple_set in cpp_object.simple_sets])
 
     @property
     def all_variables(self) -> VariableSet:
@@ -343,7 +343,6 @@ class Event(AbstractCompositeSet):
 
     def marginal(self, variables: VariableSet) -> Event:
         """
-        TODO: Something wrong with add_simple_set
         Create the marginal event, that only contains the variables given..
 
         :param variables: The variables to contain in the marginal event

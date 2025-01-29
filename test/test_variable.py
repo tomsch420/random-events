@@ -1,5 +1,8 @@
 import unittest
 
+import numpy as np
+
+from random_events.product_algebra import SimpleEvent
 from random_events.variable import *
 from random_events.interval import *
 
@@ -43,6 +46,22 @@ class SymbolicTestCase(unittest.TestCase):
         x = Symbolic("x", Set(a, b, c))
         x_ = Variable.from_json(x.to_json())
         self.assertEqual(x, x_)
+
+class Continuous2(Continuous):
+    mean: int
+
+    def __init__(self, name, mean):
+        super().__init__(name)
+        self.mean = mean
+
+class InheritanceTestCase(unittest.TestCase):
+
+    def test_conversion(self):
+        v1 = Continuous2("david", 2)
+        event = SimpleEvent({v1: open_closed(-np.inf, 0)}).as_composite_set()
+        event2 = event.complement()
+        v2 = event2.all_variables[0]
+        self.assertIsInstance(v2, Continuous2)
 
 
 if __name__ == '__main__':
