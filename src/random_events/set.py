@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from typing_extensions import Union
+
 from .sigma_algebra import *
 import random_events_lib as rl
 
@@ -8,27 +11,28 @@ class SetElement(AbstractSimpleSet):
     Represents a SetElement.
     """
 
-    def __init__(self, element: str, all_elements: set):
+    def __init__(self, element, all_elements: Union[Set, SortedSet]):
         """
         Create a new set element.
-        :param element: The element of the set.
+        :param element: The element of the set. Can be a string, integer, float, or double.
         :param all_elements: The set of all elements.
         """
         self.all_elements = SortedSet(all_elements)
+        self.hash_map = {hash(elem): elem for elem in self.all_elements}
         if element == EMPTY_SET_SYMBOL or element == -1:
             self.element = EMPTY_SET_SYMBOL
-            self._cpp_object = rl.SetElement(list(self.all_elements))
+            self._cpp_object = rl.SetElement(set(self.hash_map.keys()))
         elif element not in self.all_elements:
             raise ValueError(f"Element {element} is not in the set of all elements.")
         else:
             self.element = element
-            self._cpp_object = rl.SetElement(self.all_elements.index(element), list(self.all_elements))
+            self.element_index = self.all_elements.index(element)
+            self._cpp_object = rl.SetElement(self.element_index, set(self.hash_map.keys()))
 
-    @classmethod
-    def _from_cpp(cls, cpp_object):
+    def _from_cpp(self, cpp_object):
         if cpp_object.element_index == -1:
-            return SetElement(EMPTY_SET_SYMBOL, set())
-        return cls(list(SortedSet(cpp_object.all_elements))[cpp_object.element_index], cpp_object.all_elements)
+            return SetElement(-1, set())
+        return SetElement(list(self.hash_map.values())[cpp_object.element_index], self.all_elements)
 
     def contains(self, item: Self) -> bool:
         return self == item
@@ -87,9 +91,8 @@ class Set(AbstractCompositeSet):
             self._cpp_object = rl.Set(set(), set())
 
 
-    @classmethod
-    def _from_cpp(cls, cpp_object):
-        return cls(*[SetElement._from_cpp(cpp_simple_set) for cpp_simple_set in cpp_object.simple_sets])
+    def _from_cpp(self, cpp_object):
+        return Set(*[self.simple_sets[0]._from_cpp(cpp_simple_set) for cpp_simple_set in cpp_object.simple_sets])
 
     def complement_if_empty(self) -> Self:
         raise NotImplementedError("I don't know how to do this yet.")

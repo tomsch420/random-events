@@ -86,7 +86,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
                 if isinstance(original_variable, Continuous):
                     value_back = Interval._from_cpp(value)
                 else:
-                    value_back = Set._from_cpp(value)
+                    value_back = original_variable.domain._from_cpp(value)
                 result[original_variable] = value_back
         return SimpleEvent(result)
 
