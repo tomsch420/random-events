@@ -62,6 +62,62 @@ class IntervalTestCase(unittest.TestCase):
         a_b_simplified_ = Interval(SimpleInterval(0, 2), SimpleInterval(3, 4))
         self.assertEqual(a_b_simplified, a_b_simplified_)
 
+    def test_intersection_with_self(self):
+        a = SimpleInterval(0, 1)
+        b = SimpleInterval(0.5, 1.5)
+        c = SimpleInterval(1.5, 2, Bound.CLOSED)
+        d = SimpleInterval(3, 4)
+        a_d = Interval(a, d)
+        b_c = Interval(b, c)
+
+        intersection_a_d_b_c = a_d.intersection_with(b_c)
+        intersection_expected = Interval(SimpleInterval(0.5, 1))
+        self.assertEqual(intersection_a_d_b_c, intersection_expected)
+
+    def test_intersection_with_simple_set(self):
+        a = SimpleInterval(0, 1)
+        b = SimpleInterval(0.5, 1.5)
+        d = SimpleInterval(3, 4)
+        a_d = Interval(a, d)
+
+        intersection_a_d_b_c = a_d.intersection_with_simple_set(b)
+        intersection_expected = Interval(SimpleInterval(0.5, 1))
+        self.assertEqual(intersection_a_d_b_c, intersection_expected)
+
+    def test_intersection_with_set_of_simple_sets(self):
+        a = SimpleInterval(0, 1)
+        b = SimpleInterval(0.5, 1.5)
+        c = SimpleInterval(1.5, 2, Bound.CLOSED)
+        d = SimpleInterval(3, 4)
+        a_d = Interval(a, d)
+
+        intersection_a_d_b_c = a_d.intersection_with_simple_sets({b, c})
+        intersection_expected = Interval(SimpleInterval(0.5, 1))
+        self.assertEqual(intersection_a_d_b_c, intersection_expected)
+
+    def test_complement(self):
+        a = SimpleInterval(0, 1)
+        d = SimpleInterval(3, 4)
+        a_d = Interval(a, d)
+
+        complement_a_d = a_d.complement()
+        complement_a_d_ = Interval(SimpleInterval(-float('inf'), 0, Bound.OPEN, Bound.CLOSED),
+                                   SimpleInterval(1, 3, Bound.CLOSED, Bound.CLOSED),
+                                   SimpleInterval(4, float('inf'), Bound.CLOSED, Bound.OPEN))
+        self.assertEqual(complement_a_d, complement_a_d_)
+
+    def test_make_disjoint(self):
+        a = SimpleInterval(0, 1, Bound.CLOSED, Bound.CLOSED)
+        b = SimpleInterval(0.5, 1.5, Bound.CLOSED, Bound.CLOSED)
+        c = SimpleInterval(1.5, 2, Bound.CLOSED, Bound.CLOSED)
+        d = SimpleInterval(2, 3, Bound.CLOSED, Bound.CLOSED)
+        a_b_c_d = Interval(a, b, c, d)
+
+        disjoint = a_b_c_d.make_disjoint()
+
+        a_b_c_d_expected = Interval(SimpleInterval(0, 3, Bound.CLOSED, Bound.CLOSED))
+        self.assertEqual(disjoint, a_b_c_d_expected)
+
     def test_union(self):
         a = SimpleInterval(0, 1)
         b = SimpleInterval(0.5, 1.5)

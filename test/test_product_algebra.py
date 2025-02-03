@@ -9,58 +9,64 @@ from random_events.sigma_algebra import AbstractSimpleSet
 from random_events.variable import Continuous, Symbolic
 
 
-class TestEnum(SetElement):
-    EMPTY_SET = 0
-    A = 1
-    B = 2
-    C = 4
-
+str_set = {'a', 'c', 'b'}
 
 class EventTestCase(unittest.TestCase):
     x = Continuous("x")
     y = Continuous("y")
     z = Continuous("z")
-    a = Symbolic("a", TestEnum)
-    b = Symbolic("b", TestEnum)
+    a = Symbolic("a", str_set)
+    b = Symbolic("b", str_set)
 
     def test_constructor(self):
-        event = SimpleEvent({self.a: Set(TestEnum.A), self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)})
+        sa = SetElement("a", str_set)
+        sb = SetElement("b", str_set)
+        event = SimpleEvent({self.a: Set(sa), self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))})
 
         self.assertEqual(event[self.x], Interval(SimpleInterval(0, 1)))
         self.assertEqual(event[self.y], Interval(SimpleInterval(0, 1)))
-        self.assertEqual(event[self.a], Set(TestEnum.A))
+        self.assertEqual(event[self.a], Set(sa))
 
         self.assertFalse(event.is_empty())
-        self.assertTrue(event.contains((TestEnum.A, 0.5, 0.1,)))
-        self.assertFalse(event.contains((TestEnum.B, 0.5, 0.1,)))
 
     def test_intersection_with(self):
+        sa = SetElement("a", str_set)
+        sb = SetElement("b", str_set)
+        sc = SetElement("c", str_set)
         event_1 = SimpleEvent(
-            {self.a: Set(TestEnum.A, TestEnum.B), self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)})
-        event_2 = SimpleEvent({self.a: TestEnum.A, self.x: SimpleInterval(0.5, 1)})
+            {self.a: Set(sa, sb), self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))})
+        event_2 = SimpleEvent({self.a: Set(sa), self.x: Interval(SimpleInterval(0.5, 1))})
+        event_3 = SimpleEvent({self.a: Set(sc)})
         intersection = event_1.intersection_with(event_2)
+
         intersection_ = SimpleEvent(
-            {self.a: Set(TestEnum.A), self.x: Interval(SimpleInterval(0.5, 1)), self.y: Interval(SimpleInterval(0, 1))})
+            {self.a: Set(sa), self.x: Interval(SimpleInterval(0.5, 1)), self.y: Interval(SimpleInterval(0, 1))})
+
         self.assertEqual(intersection, intersection_)
         self.assertNotEqual(intersection, event_1)
 
-        event_3 = SimpleEvent({self.a: TestEnum.C})
-        intersection = event_1.intersection_with(event_3)
-        self.assertTrue(intersection.is_empty())
+        second_intersection = event_1.intersection_with(event_3)
+        self.assertTrue(second_intersection.is_empty())
 
     def test_complement(self):
-        event = SimpleEvent({self.a: Set(TestEnum.A, TestEnum.B), self.x: SimpleInterval(0, 1), self.y: self.y.domain})
+        sa = SetElement("a", str_set)
+        sb = SetElement("b", str_set)
+        sc = SetElement("c", str_set)
+        event = SimpleEvent({self.a: Set(sa, sb), self.x: Interval(SimpleInterval(0, 1)), self.y: self.y.domain})
         complement = event.complement()
         self.assertEqual(len(complement), 2)
-        complement_1 = SimpleEvent({self.a: TestEnum.C, self.x: self.x.domain, self.y: self.y.domain})
+        complement_1 = SimpleEvent({self.a: Set(sc), self.x: self.x.domain, self.y: self.y.domain})
         complement_2 = SimpleEvent({self.a: event[self.a], self.x: event[self.x].complement(), self.y: self.y.domain})
         self.assertEqual(complement, SortedSet([complement_1, complement_2]))
 
     def test_simplify(self):
+        sa = SetElement("a", str_set)
+        sb = SetElement("b", str_set)
+        sc = SetElement("c", str_set)
         event_1 = SimpleEvent(
-            {self.a: Set(TestEnum.A, TestEnum.B), self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)})
+            {self.a: Set(sa, sb), self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))})
         event_2 = SimpleEvent(
-            {self.a: Set(TestEnum.C), self.x: SimpleInterval(0, 1), self.y: Interval(SimpleInterval(0, 1))})
+            {self.a: Set(sc), self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))})
         event = Event(event_1, event_2)
         simplified = event.simplify()
         self.assertEqual(len(simplified.simple_sets), 1)
@@ -69,18 +75,38 @@ class EventTestCase(unittest.TestCase):
             {self.a: self.a.domain, self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))}))
         self.assertEqual(simplified, result)
 
+    def test_simplify_once(self):
+        sa = SetElement("a", str_set)
+        sb = SetElement("b", str_set)
+        sc = SetElement("c", str_set)
+        event_1 = SimpleEvent(
+            {self.a: Set(sa, sb), self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))})
+        event_2 = SimpleEvent(
+            {self.a: Set(sc), self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))})
+        event = Event(event_1, event_2)
+        simplified = event.simplify_once()
+        self.assertEqual(len(simplified[0].simple_sets), 1)
+
+        result = Event(SimpleEvent(
+            {self.a: self.a.domain, self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))}))
+        self.assertEqual(simplified[0], result)
+
     def test_to_json(self):
-        event = SimpleEvent({self.a: Set(TestEnum.A, TestEnum.B), self.x: SimpleInterval(0, 1),
-                             self.y: SimpleInterval(0, 1)})
+        sa = SetElement("a", str_set)
+        sb = SetElement("b", str_set)
+        sc = SetElement("c", str_set)
+        event = SimpleEvent({self.a: Set(sa, sb), self.x: Interval(SimpleInterval(0, 1)),
+                             self.y: Interval(SimpleInterval(0, 1))})
         event_ = AbstractSimpleSet.from_json(event.to_json())
         self.assertEqual(event_, event)
 
     def test_plot_2d(self):
-        event_1 = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)})
+        event_1 = SimpleEvent({self.x: Interval(SimpleInterval(0, 1)), self.y: Interval(SimpleInterval(0, 1))})
         event_2 = SimpleEvent({self.x: Interval(SimpleInterval(1, 2)), self.y: Interval(SimpleInterval(1, 2))})
         event = Event(event_1, event_2)
         fig = go.Figure(event.plot(), event.plotly_layout())
-        self.assertIsNotNone(fig)  # fig.show()
+        self.assertIsNotNone(fig)
+        # fig.show()
 
     def test_plot_3d(self):
         event_1 = SimpleEvent(
@@ -89,18 +115,22 @@ class EventTestCase(unittest.TestCase):
             {self.x: SimpleInterval(1, 2), self.y: SimpleInterval(1, 2), self.z: SimpleInterval(1, 2)})
         event = Event(event_1, event_2)
         fig = go.Figure(event.plot(), event.plotly_layout())
-        self.assertIsNotNone(fig)  # fig.show()
+        self.assertIsNotNone(fig)
+        # fig.show()
 
     def test_union(self):
-        event = Event(SimpleEvent({self.a: TestEnum.A, self.x: open(-float("inf"), 2)}))
-        second_event = SimpleEvent({self.a: Set(TestEnum.A, TestEnum.B), self.x: open(1, 4)}).as_composite_set()
+        sa = SetElement("a", str_set)
+        sb = SetElement("b", str_set)
+        sc = SetElement("c", str_set)
+        event = Event(SimpleEvent({self.a: sa, self.x: open(-float("inf"), 2)}))
+        second_event = SimpleEvent({self.a: Set(sa, sb), self.x: open(1, 4)}).as_composite_set()
         union = event | second_event
-        result = Event(SimpleEvent({self.a: TestEnum.A, self.x: open(-float("inf"), 4)}),
-                       SimpleEvent({self.a: TestEnum.B, self.x: open(1, 4)}))
+        result = Event(SimpleEvent({self.a: sa, self.x: open(-float("inf"), 4)}),
+                        SimpleEvent({self.a: sb, self.x: open(1, 4)}))
         self.assertEqual(union, result)
 
     def test_marginal_event(self):
-        event_1 = SimpleEvent({self.x: closed(0, 1), self.y: SimpleInterval(0, 1)})
+        event_1 = SimpleEvent({self.x: closed(0, 1), self.y: Interval(SimpleInterval(0, 1))})
         event_2 = SimpleEvent({self.x: closed(1, 2), self.y: Interval(SimpleInterval(3, 4))})
         event_3 = SimpleEvent({self.x: closed(5, 6), self.y: Interval(SimpleInterval(5, 6))})
         event = Event(event_1, event_2, event_3)
@@ -110,8 +140,11 @@ class EventTestCase(unittest.TestCase):
         # fig.show()
 
     def test_to_json_multiple_events(self):
+        sa = SetElement("a", str_set)
+        sb = SetElement("b", str_set)
+        sc = SetElement("c", str_set)
         event = SimpleEvent({self.x: closed(0, 1), self.y: SimpleInterval(3, 5),
-                             self.a: Set(TestEnum.A, TestEnum.B)}).as_composite_set()
+                             self.a: Set(sa, sb)}).as_composite_set()
         event_ = AbstractSimpleSet.from_json(event.to_json())
         self.assertEqual(event_, event)
 
@@ -157,10 +190,11 @@ class NoneTypeObjectInDifferenceTestCase(unittest.TestCase):
 
 
 class OperationsWithEmptySetsTestCase(unittest.TestCase):
-
+    sa = SetElement("a", str_set)
+    sb = SetElement("b", str_set)
+    sc = SetElement("c", str_set)
     x: Continuous = Continuous("x")
     y: Continuous = Continuous("y")
-    a: Symbolic = Symbolic("a", TestEnum)
 
     def test_empty_union(self):
         empty_event = SimpleEvent({self.x: SimpleInterval(0, 0), self.y: SimpleInterval(0, 0)}).as_composite_set()

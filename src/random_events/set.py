@@ -1,111 +1,104 @@
 from __future__ import annotations
 
-import enum
-
-from typing_extensions import Type
+from typing_extensions import Union
 
 from .sigma_algebra import *
-from .utils import get_full_class_name
+import random_events_lib as rl
 
 
-class SetElement(AbstractSimpleSet, int, enum.Enum):
+class SetElement(AbstractSimpleSet):
     """
-    Base class for enums that are used as elements in a set.
-
-    Classes that inherit from this class have to define an attribute called EMPTY_SET.
-    It is advisable to define EMPTY_SET as -1 to correctly work with indices.
-    The empty set of the class is used to access all other elements of the class.
+    Represents a SetElement.
     """
 
-    @property
-    @abstractmethod
-    def EMPTY_SET(self):
+    def __init__(self, element, all_elements: Union[Set, SortedSet]):
         """
-        :return: The empty set of the class.
+        Create a new set element.
+        :param element: The element of the set. Can be a string, integer, float, or double.
+        :param all_elements: The set of all elements.
         """
-        raise NotImplementedError("The EMPTY_SET attribute has to be defined.")
-
-    @property
-    def all_elements(self):
-        return self.__class__
-
-    def intersection_with(self, other: Self) -> Self:
-        if self == other:
-            return self
+        self.all_elements = SortedSet(all_elements)
+        self.hash_map = {hash(elem): elem for elem in self.all_elements}
+        if element == EMPTY_SET_SYMBOL or element == -1:
+            self.element = EMPTY_SET_SYMBOL
+            self._cpp_object = rl.SetElement(set(self.hash_map.keys()))
+        elif element not in self.all_elements:
+            raise ValueError(f"Element {element} is not in the set of all elements.")
         else:
-            return self.all_elements.EMPTY_SET
+            self.element = element
+            self.element_index = self.all_elements.index(element)
+            self._cpp_object = rl.SetElement(self.element_index, set(self.hash_map.keys()))
 
-    def complement(self) -> SimpleSetContainer:
-        result = SortedSet()
-        for element in self.all_elements:
-            if element != self and element != self.all_elements.EMPTY_SET:
-                result.add(element)
-        return result
-
-    def is_empty(self) -> bool:
-        return self == self.EMPTY_SET
+    def _from_cpp(self, cpp_object):
+        if cpp_object.element_index == -1:
+            return SetElement(-1, set())
+        return SetElement(list(self.hash_map.values())[cpp_object.element_index], self.all_elements)
 
     def contains(self, item: Self) -> bool:
         return self == item
 
     def non_empty_to_string(self) -> str:
-        return self.name
+        return self.element
 
     def __hash__(self):
-        return enum.Enum.__hash__(self)
+        return hash((self.element, tuple(self.all_elements)))
 
     def __lt__(self, other):
-        return self.value < other.value
+        return self.element < other.element
 
-    @classmethod
-    def cls_to_json(cls) -> Dict[str, Any]:
-        return {"class_name": cls.__name__, "content": dict(map(lambda item: (item.name, item.value), cls))}
+    def __eq__(self, other):
+        if self.element == other.element:
+            return True
+        return False
 
-    @classmethod
-    def cls_from_json(cls, data: Dict[str, Any]) -> Type[enum.Enum]:
-        return cls(data["class_name"], data["content"])
+    def __repr__(self):
+        return self.non_empty_to_string()
+
+    def __iter__(self):
+        return iter(self.all_elements)
 
     def to_json(self) -> Dict[str, Any]:
-        return {"type": get_full_class_name(SetElement), "value": self.value,
-                **self.cls_to_json()}
+        return {**super().to_json(), "value": self.element, "content": self.all_elements}
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
-        deserialized_class = cls.cls_from_json(data)
-        return deserialized_class(data["value"])
+        return cls(data["value"], data["content"])
 
     def as_composite_set(self) -> AbstractCompositeSet:
         return Set(self)
 
 
-    def __deepcopy__(self):
-        return self.__class__(self.value)
-
 class Set(AbstractCompositeSet):
+    """
+    Represents a set.
+    """
+
     simple_sets: SetElementContainer
+    """
+    The simple sets that make up the set.
+    """
+
+    def __init__(self, *simple_sets):
+        """
+        Create a new set.
+        :param simple_sets: The simple sets that make up the set.
+        """
+        super().__init__(*simple_sets)
+        if len(simple_sets) > 0:
+            self._cpp_object = rl.Set({simple_set._cpp_object for simple_set in self.simple_sets},
+                                      self.simple_sets[0]._cpp_object.all_elements)
+        else:
+            self._cpp_object = rl.Set(set(), set())
+
+
+    def _from_cpp(self, cpp_object):
+        return Set(*[self.simple_sets[0]._from_cpp(cpp_simple_set) for cpp_simple_set in cpp_object.simple_sets])
 
     def complement_if_empty(self) -> Self:
         raise NotImplementedError("I don't know how to do this yet.")
 
-    def simplify(self) -> Self:
-        return self
-
     def new_empty_set(self) -> Self:
         return Set()
-
-    def make_disjoint(self) -> Self:
-        return self
-
-    def to_json(self) -> Dict[str, Any]:
-        return {**SubclassJSONSerializer.to_json(self),
-                "simple_set_class": self.simple_sets[0].cls_to_json(),
-                "simple_set_indices": list(map(lambda item: int(item), self.simple_sets))}
-
-    @classmethod
-    def _from_json(cls, data: Dict[str, Any]) -> Self:
-        simple_set_class = SetElement.cls_from_json(data["simple_set_class"])
-        simple_sets = [simple_set_class(index) for index in data["simple_set_indices"]]
-        return cls(*simple_sets)
 
 
 # Type definitions

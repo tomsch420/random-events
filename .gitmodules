@@ -1,0 +1,3 @@
+[submodule "src/random-events-lib"]
+	path = src/random-events-lib
+	url = https://github.com/davidprueser/random-events-lib.git
