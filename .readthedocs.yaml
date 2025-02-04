@@ -28,5 +28,5 @@ python:
 
 sphinx:
   builder: html
-  configuration: doc/conf.py
+  configuration: docs/conf.py
 
