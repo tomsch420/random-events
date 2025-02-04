@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
 import itertools
-from random_events.interval import SimpleInterval
+from random_events.interval import SimpleInterval, singleton
 from sortedcontainers import SortedDict, SortedKeysView, SortedValuesView
 from typing_extensions import List, TYPE_CHECKING
 import plotly.graph_objects as go
@@ -106,13 +106,62 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
     def __hash__(self):
         return hash(tuple(self.items()))
 
-    def __setitem__(self, key: Variable, value: Union[AbstractSimpleSet, AbstractCompositeSet]):
+    def __setitem__(self, key: Variable, value: Union[AbstractSimpleSet, AbstractCompositeSet, Iterable, Any]):
+        """
+        Set the value of a variable in the event.
+        Also allows for assigning variables to values outside of the objects of this package. If this is the case,
+        this tries to convert the value to a SimpleSet or CompositeSet.
+
+        :param key: The variable to set the value for
+        :param value: The value to set
+        """
+
+        type_error = TypeError(f"Value must be a SimpleSet, CompositeSet or something that can be converted to that."
+                               f"Got value of {type(value)} instead."
+                               f"Value is {value}.")
+        symbol_not_found_error = ValueError(f"Value {value} not in domain of variable {key}. Domain is {key.domain}")
+
+        # trivial case
         if isinstance(value, AbstractSimpleSet):
             super().__setitem__(key, value.as_composite_set())
         elif isinstance(value, AbstractCompositeSet):
             super().__setitem__(key, value)
+
+        # try to convert symbolic values
+        elif isinstance(key, Symbolic):
+            if not isinstance(value, Iterable):
+                value = [value]
+
+            parsed_value = []
+
+            # try to match the values to the set elements
+            for v in value:
+
+                # if the value is already a SetElement, append it
+                if isinstance(v, SetElement):
+                    parsed_value.append(v)
+
+                # if not, try to find the matching element
+                else:
+                    matches = [elem for elem in key.domain if elem.element == v]
+                    if len(matches) == 0:
+                        raise symbol_not_found_error
+                    parsed_value += matches
+
+            value = Set(*parsed_value)
+            super().__setitem__(key, value)
+
+        # try to convert continuous values
+        elif isinstance(key, (Continuous, Integer)):
+            if isinstance(value, Iterable):
+                value = SimpleInterval(min(value), max(value)).as_composite_set()
+            elif isinstance(value, (float, int)):
+                value = singleton(value)
+            else:
+                raise type_error
+            super().__setitem__(key, value)
         else:
-            raise TypeError(f"Value must be a SimpleSet or CompositeSet, got {type(value)} instead.")
+            raise type_error
 
     def __lt__(self, other: Self):
         if len(self.variables) < len(other.variables):

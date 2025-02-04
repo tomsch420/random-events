@@ -170,6 +170,17 @@ class EventTestCase(unittest.TestCase):
         bb = event.bounding_box()
         self.assertEqual(event, event_before_bb)
 
+    def test_setitem_(self):
+        event = SimpleEvent()
+        event[self.a] = "a"
+        self.assertEqual(event[self.a], SetElement("a", str_set).as_composite_set())
+        event[self.a] = ("a", "b")
+        self.assertEqual(event[self.a], SetElement("a", str_set).as_composite_set() |
+                         SetElement("b", str_set).as_composite_set())
+
+        with self.assertRaises(ValueError):
+            event[self.a] = 1
+
 class NoneTypeObjectInDifferenceTestCase(unittest.TestCase):
     x: Continuous = Continuous("x")
     y: Continuous = Continuous("y")

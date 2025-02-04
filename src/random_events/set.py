@@ -41,7 +41,7 @@ class SetElement(AbstractSimpleSet):
         return self.element
 
     def __hash__(self):
-        return hash((self.element, tuple(self.all_elements)))
+        return hash(self.element)
 
     def __lt__(self, other):
         return self.element < other.element
