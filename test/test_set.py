@@ -83,6 +83,23 @@ class SetTestCase(unittest.TestCase):
         s_ = AbstractSimpleSet.from_json(s.to_json())
         self.assertEqual(s, s_)
 
+    def test_from_iterable(self):
+        s = Set.from_iterable(str_set)
+        self.assertEqual(s, Set(SetElement('a', str_set), SetElement('b', str_set), SetElement('c', str_set)))
+
+    def test_from_enum(self):
+        class TestEnum(enum.IntEnum):
+            A = 1
+            B = 2
+
+        s = Set.from_iterable(TestEnum)
+        self.assertIsNotNone(s.__str__())
+
+    def test_hashmap(self):
+        a = SetElement('a', str_set)
+        b = SetElement('b', str_set)
+        s = Set(a, b)
+        self.assertEqual(s.hash_map, {hash(a): a, hash(b): b})
 
 class SetTypeTestCase(unittest.TestCase):
     def test_int(self):

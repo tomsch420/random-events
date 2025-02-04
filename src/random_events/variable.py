@@ -143,6 +143,17 @@ class Symbolic(Variable):
     def _from_cpp(cls, cpp_object):
         return cls(cpp_object.name, Set._from_cpp(cpp_object.get_domain()))
 
+    def make_value(self, value) -> SetElement:
+        """
+        Create a set element from a value.
+        :param value: The value.
+        :return: The value wrapped in a set element.
+        """
+        if not hash(value) in self.domain.hash_map:
+            raise ValueError(f"Tried to add a value {value} to a symbolic variable {self.name} that is not in the "
+                             f"domain. The domain is {self.domain}.")
+        return SetElement(value, self.domain.simple_sets[0].all_elements)
+
 
 class Integer(Variable):
     """

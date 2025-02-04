@@ -38,7 +38,7 @@ class SetElement(AbstractSimpleSet):
         return self == item
 
     def non_empty_to_string(self) -> str:
-        return self.element
+        return str(self.element)
 
     def __hash__(self):
         return hash(self.element)
@@ -99,6 +99,18 @@ class Set(AbstractCompositeSet):
 
     def new_empty_set(self) -> Self:
         return Set()
+
+    @classmethod
+    def from_iterable(cls, iterable: Iterable) -> Self:
+        all_elements = set(iterable)
+        return cls(*[SetElement(elem, all_elements) for elem in all_elements])
+
+    @property
+    def hash_map(self):
+        """
+        :return: A map that maps the hashes of each simple set in this to the simple set.
+        """
+        return {hash(elem): elem for elem in self.simple_sets}
 
 
 # Type definitions
