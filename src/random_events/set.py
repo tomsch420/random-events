@@ -58,7 +58,7 @@ class SetElement(AbstractSimpleSet):
         return iter(self.all_elements)
 
     def to_json(self) -> Dict[str, Any]:
-        return {**super().to_json(), "value": self.element, "content": self.all_elements}
+        return {**super().to_json(), "value": self.element, "content": list(self.all_elements)}
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
@@ -111,6 +111,14 @@ class Set(AbstractCompositeSet):
         :return: A map that maps the hashes of each simple set in this to the simple set.
         """
         return {hash(elem): elem for elem in self.simple_sets}
+
+    @property
+    def all_elements(self):
+        if not self.is_empty():
+            return self.simple_sets[0].all_elements
+        else:
+            raise ValueError("The set is empty. All elements are only avialable for non-empty composite sets.")
+
 
 
 # Type definitions

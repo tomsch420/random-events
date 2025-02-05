@@ -139,6 +139,13 @@ class EventTestCase(unittest.TestCase):
         fig = go.Figure(marginal.plot())
         # fig.show()
 
+    def test_marginal_event_symbolic(self):
+        a = SetElement("a", str_set)
+        event = SimpleEvent({self.a: "a", self.b: "b"}).as_composite_set() | SimpleEvent({self.a: "b", self.b: "b"}).as_composite_set()
+        e_a = event.marginal(SortedSet([a]))
+        self.assertEqual(e_a, SimpleEvent({self.a: ("a", "b")}).as_composite_set())
+
+
     def test_to_json_multiple_events(self):
         sa = SetElement("a", str_set)
         sb = SetElement("b", str_set)
@@ -217,7 +224,7 @@ class OperationsWithEmptySetsTestCase(unittest.TestCase):
         event_1 = SimpleEvent({self.x: SimpleInterval(0, 1)}).as_composite_set()
         event_2 = SimpleEvent({self.y: SimpleInterval(0, 1)}).as_composite_set()
         union = event_1.union_with(event_2)
-        # self.assertEqual(union, Event(event_1, event_2))
+        self.assertEqual(union, Event(event_1, event_2))
 
     def test_difference_with_empty_set(self):
         event = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()

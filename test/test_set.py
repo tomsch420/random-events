@@ -49,6 +49,7 @@ class SetElementTestCase(unittest.TestCase):
         a = SetElement('a', str_set)
         b = AbstractSimpleSet.from_json(a.to_json())
         self.assertEqual(a, b)
+        self.assertEqual(a.all_elements, b.all_elements)
 
 
 class SetTestCase(unittest.TestCase):

@@ -367,11 +367,13 @@ class Event(AbstractCompositeSet):
         result = SortedSet()
         return result.union(*[SortedSet(simple_set.variables) for simple_set in self.simple_sets])
 
-    def fill_missing_variables(self):
+    def fill_missing_variables(self, variables: Optional[VariableSet] = None):
         """
         Fill all simple sets with the missing variables.
+
+        :param variables: The variables to fill the event with. If None, all variables are used.
         """
-        all_variables = self.all_variables
+        all_variables = self.all_variables | (variables or SortedSet())
         for simple_set in self.simple_sets:
             simple_set.fill_missing_variables(all_variables)
 
@@ -392,7 +394,7 @@ class Event(AbstractCompositeSet):
 
     def marginal(self, variables: VariableSet) -> Event:
         """
-        Create the marginal event, that only contains the variables given..
+        Create the marginal event, that only contains the variables given.
 
         :param variables: The variables to contain in the marginal event
         :return: The marginal event
