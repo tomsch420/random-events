@@ -67,6 +67,8 @@ class SetElement(AbstractSimpleSet):
     def as_composite_set(self) -> AbstractCompositeSet:
         return Set(self)
 
+    def __deepcopy__(self):
+        return SetElement(self.element, self.all_elements)
 
 class Set(AbstractCompositeSet):
     """
