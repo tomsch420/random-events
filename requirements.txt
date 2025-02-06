@@ -3,4 +3,5 @@ plotly
 typing_extensions
 sortedcontainers
 pybind11
--e src/random-events-lib
+
+src/random-events-lib
