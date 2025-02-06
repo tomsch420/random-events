@@ -30,3 +30,8 @@ include = ["random_events*"]
 [tool.setuptools.dynamic]
 version = {attr = "random_events.__version__"}
 dependencies = {file = "requirements.txt"}
+
+[project.optional-dependencies]
+other_package = [
+    "src/random-events-lib", # Or the actual path to the package
+]
