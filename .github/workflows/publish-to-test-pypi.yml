@@ -16,6 +16,9 @@ jobs:
       with:
         python-version: "3.x"
 
+    - name: Get submodules
+      run: git submodule update --init --recursive
+
     - name: Install pypa/build
       run: >-
         python3 -m
