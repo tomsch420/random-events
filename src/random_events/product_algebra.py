@@ -415,7 +415,7 @@ class Event(AbstractCompositeSet):
                 if variable not in result:
                     result[variable] = simple_set[variable].__deepcopy__()
                 else:
-                    result[variable] = result[variable].union_with(simple_set[variable].__deepcopy__())
+                    result[variable] = result[variable].__deepcopy__().union_with(simple_set[variable].__deepcopy__())
         return result
 
     def plot(self, color="#636EFA") -> Union[List[go.Scatter], List[go.Mesh3d]]:
