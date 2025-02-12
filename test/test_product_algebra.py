@@ -140,7 +140,7 @@ class EventTestCase(unittest.TestCase):
         # fig.show()
 
     def test_marginal_event_symbolic(self):
-        a = SetElement("a", str_set)
+        a = Symbolic("a", str_set)
         event = SimpleEvent({self.a: "a", self.b: "b"}).as_composite_set() | SimpleEvent({self.a: "b", self.b: "b"}).as_composite_set()
         e_a = event.marginal(SortedSet([a]))
         self.assertEqual(e_a, SimpleEvent({self.a: ("a", "b")}).as_composite_set())
@@ -208,9 +208,6 @@ class NoneTypeObjectInDifferenceTestCase(unittest.TestCase):
 
 
 class OperationsWithEmptySetsTestCase(unittest.TestCase):
-    sa = SetElement("a", str_set)
-    sb = SetElement("b", str_set)
-    sc = SetElement("c", str_set)
     x: Continuous = Continuous("x")
     y: Continuous = Continuous("y")
 
@@ -218,19 +215,41 @@ class OperationsWithEmptySetsTestCase(unittest.TestCase):
         empty_event = SimpleEvent({self.x: SimpleInterval(0, 0), self.y: SimpleInterval(0, 0)}).as_composite_set()
         event = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()
         union = empty_event.union_with(event)
+        union2 = event.union_with(empty_event)
         self.assertEqual(union, event)
+        self.assertEqual(union2, event)
 
     def test_union_different_variables(self):
-        event_1 = SimpleEvent({self.x: SimpleInterval(0, 1)}).as_composite_set()
-        event_2 = SimpleEvent({self.y: SimpleInterval(0, 1)}).as_composite_set()
+        simple_event1 = SimpleEvent({self.x: closed(0, 1)})
+        simple_event2 = SimpleEvent({self.y: closed(3, 4)})
+        event_1 = Event(simple_event1)
+        event_2 = Event(simple_event2)
+
+        event_1.fill_missing_variables(event_2.all_variables)
+        event_2.fill_missing_variables(event_1.all_variables)
+
         union = event_1.union_with(event_2)
-        self.assertEqual(union, Event(event_1, event_2))
+
+        exp_se1 = SimpleEvent({self.x: closed(0, 1), self.y: open(float('-inf'), float('inf'))})
+        exp_se2 = SimpleEvent({self.x: open(float('-inf'), float('inf')), self.y: closed(3, 4)})
+        exp_result = Event(exp_se1, exp_se2).make_disjoint()
+        self.assertEqual(union, exp_result)
 
     def test_difference_with_empty_set(self):
         event = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)}).as_composite_set()
         empty_event = Event()
         diff = event.difference_with(empty_event)
         self.assertEqual(diff, event)
+
+    # def test_symbolic(self):
+    #     sym = Symbolic("s1", str_set)
+    #     sym2 = Symbolic("s2", str_set)
+    #
+    #     e1 = SimpleEvent()
+    #     e1[sym] = 'a'
+    #
+    #     print(e1[sym])
+    #     print(e1)
 
 if __name__ == '__main__':
     unittest.main()
