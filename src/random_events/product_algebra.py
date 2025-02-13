@@ -72,41 +72,17 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         """
         VariableMap.__init__(self, *args, **kwargs)
         for key, value in self.items():
-            self[key] = value
+            self._setitem_without_cpp(key, value)
 
+        self._update_cpp_object()
+
+    def _update_cpp_object(self):
         self._cpp_object = rl.SimpleEvent({variable._cpp_object: value._cpp_object for variable, value in self.items()})
 
-    def _from_cpp(self, cpp_object):
-        variables = cpp_object.variable_map.items()
-        result = {}
-        og_variables = {v.name: v for v in self.variables}
-        for variable, value in variables:
-            original_variable = og_variables.get(variable.name)
-            if original_variable:
-                if isinstance(original_variable, Continuous):
-                    value_back = Interval._from_cpp(value)
-                else:
-                    value_back = original_variable.domain._from_cpp(value)
-                result[original_variable] = value_back
-        return SimpleEvent(result)
+    def get_variable_by_name(self, name: str):
+        return [v for v in self.variables if v.name == name][0]
 
-    def as_composite_set(self) -> Event:
-        return Event(self)
-
-    @property
-    def assignments(self) -> SortedValuesView:
-        return self.values()
-
-    def contains(self, item: Tuple) -> bool:
-        for assignment, value in zip(self.assignments, item):
-            if not assignment.contains(value):
-                return False
-        return True
-
-    def __hash__(self):
-        return hash(tuple(self.items()))
-
-    def __setitem__(self, key: Variable, value: Union[AbstractSimpleSet, AbstractCompositeSet, Iterable, Any]):
+    def _setitem_without_cpp(self, key: Variable, value: Union[AbstractSimpleSet, AbstractCompositeSet, Iterable, Any]):
         """
         Set the value of a variable in the event.
         Also allows for assigning variables to values outside of the objects of this package. If this is the case,
@@ -162,6 +138,50 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
             super().__setitem__(key, value)
         else:
             raise type_error
+
+
+    def _from_cpp(self, cpp_object):
+        variables = cpp_object.variable_map.items()
+        result = {}
+        og_variables = {v.name: v for v in self.variables}
+        for variable, value in variables:
+            original_variable = og_variables.get(variable.name)
+            if original_variable:
+                if isinstance(original_variable, Continuous):
+                    value_back = Interval._from_cpp(value)
+                else:
+                    value_back = original_variable.domain._from_cpp(value)
+                result[original_variable] = value_back
+        return SimpleEvent(result)
+
+    def as_composite_set(self) -> Event:
+        return Event(self)
+
+    @property
+    def assignments(self) -> SortedValuesView:
+        return self.values()
+
+    def contains(self, item: Tuple) -> bool:
+        for assignment, value in zip(self.assignments, item):
+            if not assignment.contains(value):
+                return False
+        return True
+
+    def __hash__(self):
+        return hash(tuple(self.items()))
+
+    def __setitem__(self, key: Variable, value: Union[AbstractSimpleSet, AbstractCompositeSet, Iterable, Any]):
+        """
+        Set the value of a variable in the event.
+        Also allows for assigning variables to values outside of the objects of this package. If this is the case,
+        this tries to convert the value to a SimpleSet or CompositeSet.
+
+        :param key: The variable to set the value for
+        :param value: The value to set
+        """
+
+        self._setitem_without_cpp(key, value)
+        self._update_cpp_object()
 
     def __lt__(self, other: Self):
         if len(self.variables) < len(other.variables):
@@ -329,7 +349,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         for variable in variables:
             if variable not in self:
                 self[variable] = variable.domain
-                self._cpp_object.variable_map[variable._cpp_object] = variable.domain._cpp_object
+        self._cpp_object.fill_missing_variables({variable._cpp_object for variable in variables})
 
     def __deepcopy__(self):
         return self.__class__({variable: assignment.__deepcopy__() for variable, assignment in self.items()})
@@ -355,9 +375,8 @@ class Event(AbstractCompositeSet):
         :param simple_sets: The simple events that make up the event.
         """
         super().__init__(*simple_sets)
-        self.fill_missing_variables()
-
         self._cpp_object = rl.Event({simple_set._cpp_object for simple_set in self.simple_sets})
+        self.fill_missing_variables()
 
     def _from_cpp(self, cpp_object):
         return Event(*[self.simple_sets[0]._from_cpp(cpp_simple_set) for cpp_simple_set in cpp_object.simple_sets])
@@ -376,6 +395,8 @@ class Event(AbstractCompositeSet):
         all_variables = self.all_variables | (variables or SortedSet())
         for simple_set in self.simple_sets:
             simple_set.fill_missing_variables(all_variables)
+
+        self._cpp_object.fill_missing_variables({variable._cpp_object for variable in all_variables})
 
     def simplify_once(self) -> Tuple[Self, bool]:
         """
