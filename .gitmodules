@@ -1,3 +1,0 @@
-[submodule "src/random-events-lib"]
-	path = src/random-events-lib
-	url = git@github.com:tomsch420/random-events-lib.git
