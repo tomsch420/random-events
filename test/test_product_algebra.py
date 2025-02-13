@@ -1,6 +1,7 @@
 import unittest
 
 import plotly.graph_objects as go
+from numba.cuda.libdevice import exp2f
 
 from random_events.interval import *
 from random_events.product_algebra import SimpleEvent, Event
@@ -241,15 +242,11 @@ class OperationsWithEmptySetsTestCase(unittest.TestCase):
         diff = event.difference_with(empty_event)
         self.assertEqual(diff, event)
 
-    # def test_symbolic(self):
-    #     sym = Symbolic("s1", str_set)
-    #     sym2 = Symbolic("s2", str_set)
-    #
-    #     e1 = SimpleEvent()
-    #     e1[sym] = 'a'
-    #
-    #     print(e1[sym])
-    #     print(e1)
+    def test_function_purity(self):
+        e1 = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0, 1)})
+        e2 = SimpleEvent({self.x: SimpleInterval(0, 1), self.y: SimpleInterval(0.5, 2)})
+        e3 = e1.intersection_with(e2)
+        print(e1)
 
 if __name__ == '__main__':
     unittest.main()
