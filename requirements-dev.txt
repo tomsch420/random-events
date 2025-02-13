@@ -1,5 +1,5 @@
 -r requirements.txt
-src/random_events_lib
+src/random-events-lib
 
 jupyter
 pillow
