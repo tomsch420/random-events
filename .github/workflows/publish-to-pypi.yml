@@ -25,7 +25,9 @@ jobs:
         submodules: 'true'
 
     - name: Update submodules
-      run: git submodule update --init --recursive
+      run: |
+        git config --global --add safe.directory '*'
+        git submodule update --init --recursive
 
     - name: Install dependencies
       run: |
