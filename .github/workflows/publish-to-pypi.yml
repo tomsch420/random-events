@@ -6,60 +6,26 @@ jobs:
   build:
     name: Build and Test the Python distribution
     runs-on: ubuntu-latest
-
-    container:
-        image: quay.io/pypa/manylinux2014_x86_64
-    permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
-    environment: release
-
-  
     steps:
 
-      - name: Checkout 🛎
-        uses: actions/checkout@v1
-        with:
-          submodules: 'true'
-      # ----------------------------------------------------------------------------------------------------------------
+    - name: Checkout the code
+      uses: actions/checkout@v2
 
-      # - name: Install user dependencies 🍼
-      #   uses: py-actions/py-dependency-install@v1
-      #   with:
-      #     path: "requirements-dev.txt"
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
 
-      - name: Install Buildtools
-        run: |
-          python3.8 -m pip install setuptools build numpy
-          python3.9 -m pip install setuptools build numpy
-          python3.10 -m pip install setuptools build numpy
-          python3.11 -m pip install setuptools build numpy
-          python3.12 -m pip install setuptools build numpy
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install build twine
 
+    - name: Build the distribution 📦
+      run: |
+          pip wheel . -w dist/
 
-      # - name: Install pypa/build
-      #   run: >-
-      #     python3 -m
-      #     pip install
-      #     build
-      #     --user
-      # - name: Build a binary wheel and a source tarball
-      #   run: python3 -m build
-      # - name: Store the distribution packages
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: python-package-distributions
-      #     path: dist/
-          
-      - name: Build
-      # Build your program with the given configuration
-      # run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-        run: |
-          python3.8 -m build --wheel -n
-          python3.9 -m build --wheel -n
-          python3.10 -m build --wheel -n
-          python3.11 -m build --wheel -n
-          python3.12 -m build --wheel -n
   
   publish-to-pypi:
     name: >-
