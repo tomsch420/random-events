@@ -5,29 +5,37 @@ on: push
 jobs:
   build:
     name: Build and Test the Python distribution
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
+    container:
+        image: quay.io/pypa/manylinux2014_x86_64
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    environment: release
+
+  
     steps:
 
       - name: Checkout 🛎
-        uses: actions/checkout@v4
+        uses: actions/checkout@v1
         with:
           submodules: 'true'
-
-      # ----------------------------------------------------------------------------------------------------------------
-
-      - name: Setup python 🐍
-        uses: actions/setup-python@v4
-        with:
-            python-version: "3.9"
-            cache: pip
-            
       # ----------------------------------------------------------------------------------------------------------------
 
       - name: Install user dependencies 🍼
         uses: py-actions/py-dependency-install@v4
         with:
           path: "requirements-dev.txt"
+
+      - name: Install Buildtools
+        run: |
+          python3.8 -m pip install setuptools build numpy
+          python3.9 -m pip install setuptools build numpy
+          python3.10 -m pip install setuptools build numpy
+          python3.11 -m pip install setuptools build numpy
+          python3.12 -m pip install setuptools build numpy
+
 
       - name: Install pypa/build
         run: >-
@@ -42,7 +50,17 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-
+          
+      - name: Build
+      # Build your program with the given configuration
+      # run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        run: |
+          python3.8 -m build --wheel -n
+          python3.9 -m build --wheel -n
+          python3.10 -m build --wheel -n
+          python3.11 -m build --wheel -n
+          python3.12 -m build --wheel -n
+  
   publish-to-pypi:
     name: >-
       Publish Python 🐍 distribution 📦 to PyPI
