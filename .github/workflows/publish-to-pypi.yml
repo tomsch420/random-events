@@ -24,7 +24,7 @@ jobs:
       # ----------------------------------------------------------------------------------------------------------------
 
       - name: Install user dependencies 🍼
-        uses: py-actions/py-dependency-install@v4
+        uses: py-actions/py-dependency-install@v1
         with:
           path: "requirements-dev.txt"
 
