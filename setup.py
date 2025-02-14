@@ -6,7 +6,7 @@ import sys
 current_directory = os.path.dirname(os.path.abspath(__file__))
 
 # Ensure pybind11 is installed before importing it
-subprocess.check_call([sys.executable, "-m", "pip", "install", "pybind11"])
+
 
 from pybind11.setup_helpers import Pybind11Extension
 
