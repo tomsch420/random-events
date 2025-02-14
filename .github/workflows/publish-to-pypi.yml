@@ -31,7 +31,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3.9old -m pip install --upgrade pip
+        python3.9 -m pip install --upgrade pip
         python3.9 -m pip  install wheel setuptools pip --upgrade
         python3.9 -m pip  install -r requirements.txt
         python3.9 -m pip  install build twine
