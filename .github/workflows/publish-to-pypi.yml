@@ -40,7 +40,14 @@ jobs:
       run: |
           pip wheel . -w dist/
 
+    - name: Clean up dist
+      run: |
+        cd dist/
+        rm -- !(random_events*)
+        cd ..
+
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         skip_existing: false
+
