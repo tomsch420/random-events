@@ -43,7 +43,7 @@ jobs:
     - name: Clean up dist
       run: |
         cd dist/
-        rm -- !(random_events*)
+        find . ! -name 'random_events*' -type f -exec rm -f {} +
         cd ..
 
     - name: Publish to PyPI
