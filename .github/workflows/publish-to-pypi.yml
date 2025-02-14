@@ -10,6 +10,11 @@ jobs:
 
     - name: Checkout the code
       uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+
+    - name: Update submodules
+      run: git submodule update --init --recursive
 
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
