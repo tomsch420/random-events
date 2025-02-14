@@ -7,21 +7,20 @@ jobs:
     name: Build and Test the Python distribution
     runs-on: ubuntu-22.04
 
+    container:
+        image: quay.io/pypa/manylinux2014_x86_64
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    environment: release
+
+  
     steps:
 
       - name: Checkout 🛎
         uses: actions/checkout@v4
         with:
           submodules: 'true'
-
-      # ----------------------------------------------------------------------------------------------------------------
-
-      - name: Setup python 🐍
-        uses: actions/setup-python@v4
-        with:
-            python-version: "3.9"
-            cache: pip
-            
       # ----------------------------------------------------------------------------------------------------------------
 
       - name: Install user dependencies 🍼
