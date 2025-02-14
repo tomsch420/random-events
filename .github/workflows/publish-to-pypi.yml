@@ -29,16 +29,46 @@ jobs:
         git config --global --add safe.directory '*'
         git submodule update --init --recursive
 
-    - name: Install dependencies
+    - name: Build for Python3.8
+      run: |
+        python3.8 -m pip install --upgrade pip
+        python3.8 -m pip  install wheel setuptools pip --upgrade
+        python3.8 -m pip  install -r requirements.txt
+        python3.8 -m pip  install build twine
+        python3.8 -m pip wheel . -w dist/
+
+
+    - name: Build for Python3.9
       run: |
         python3.9 -m pip install --upgrade pip
         python3.9 -m pip  install wheel setuptools pip --upgrade
         python3.9 -m pip  install -r requirements.txt
         python3.9 -m pip  install build twine
+        python3.9 -m pip wheel . -w dist/
 
-    - name: Build the distribution 📦
+    - name: Build for Python3.10
       run: |
-          python3.9 -m pip wheel . -w dist/
+        python3.10 -m pip install --upgrade pip
+        python3.10 -m pip  install wheel setuptools pip --upgrade
+        python3.10 -m pip  install -r requirements.txt
+        python3.10 -m pip  install build twine
+        python3.10 -m pip wheel . -w dist/
+
+    - name: Build for Python3.11
+      run: |
+        python3.11 -m pip install --upgrade pip
+        python3.11 -m pip  install wheel setuptools pip --upgrade
+        python3.11 -m pip  install -r requirements.txt
+        python3.11 -m pip  install build twine
+        python3.11 -m pip wheel . -w dist/
+
+    - name: Build for Python3.12
+      run: |
+        python3.12 -m pip install --upgrade pip
+        python3.12 -m pip  install wheel setuptools pip --upgrade
+        python3.12 -m pip  install -r requirements.txt
+        python3.12 -m pip  install build twine
+        python3.12 -m pip wheel . -w dist/
 
     - name: Clean up dist
       run: |
