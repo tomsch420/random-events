@@ -32,13 +32,13 @@ jobs:
     - name: Install dependencies
       run: |
         python3.8 -m pip install --upgrade pip
-        pip install wheel setuptools pip --upgrade
-        pip install -r requirements.txt
-        pip install build twine
+        python3.8 -m pip  install wheel setuptools pip --upgrade
+        python3.8 -m pip  install -r requirements.txt
+        python3.8 -m pip  install build twine
 
     - name: Build the distribution 📦
       run: |
-          pip wheel . -w dist/
+          python3.8 -m pip  wheel . -w dist/
 
     - name: Clean up dist
       run: |
