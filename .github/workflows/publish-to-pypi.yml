@@ -11,7 +11,7 @@ jobs:
     name: Build and Test the Python distribution
     runs-on: ubuntu-latest
     container:
-      image: quay.io/pypa/manylinux2014_x86_64
+      image: quay.io/pypa/manylinux2014_x86_64:2025.01.24-1
     environment:
       name: pypi
       url: https://pypi.org/p/random_events  # Replace <package-name> with your PyPI project name
@@ -38,7 +38,7 @@ jobs:
 
     - name: Build the distribution 📦
       run: |
-          python3.8 -m pip  wheel . -w dist/
+          python3.8 -m pip wheel . -w dist/
 
     - name: Clean up dist
       run: |
