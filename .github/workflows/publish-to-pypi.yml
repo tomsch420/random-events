@@ -32,8 +32,12 @@ jobs:
       run: |
           pip wheel . -w dist/
 
-  
+
   publish-to-pypi:
+    on:
+      push:
+        tags:
+          - '*'
     name: >-
       Publish Python 🐍 distribution 📦 to PyPI
     if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
