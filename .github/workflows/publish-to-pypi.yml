@@ -23,10 +23,10 @@ jobs:
           submodules: 'true'
       # ----------------------------------------------------------------------------------------------------------------
 
-      - name: Install user dependencies 🍼
-        uses: py-actions/py-dependency-install@v4
-        with:
-          path: "requirements-dev.txt"
+      # - name: Install user dependencies 🍼
+      #   uses: py-actions/py-dependency-install@v1
+      #   with:
+      #     path: "requirements-dev.txt"
 
       - name: Install Buildtools
         run: |
@@ -37,19 +37,19 @@ jobs:
           python3.12 -m pip install setuptools build numpy
 
 
-      - name: Install pypa/build
-        run: >-
-          python3 -m
-          pip install
-          build
-          --user
-      - name: Build a binary wheel and a source tarball
-        run: python3 -m build
-      - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-package-distributions
-          path: dist/
+      # - name: Install pypa/build
+      #   run: >-
+      #     python3 -m
+      #     pip install
+      #     build
+      #     --user
+      # - name: Build a binary wheel and a source tarball
+      #   run: python3 -m build
+      # - name: Store the distribution packages
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: python-package-distributions
+      #     path: dist/
           
       - name: Build
       # Build your program with the given configuration
