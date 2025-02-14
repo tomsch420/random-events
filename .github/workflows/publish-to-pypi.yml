@@ -23,10 +23,10 @@ jobs:
           submodules: 'true'
       # ----------------------------------------------------------------------------------------------------------------
 
-      - name: Install user dependencies 🍼
-        uses: py-actions/py-dependency-install@v1
-        with:
-          path: "requirements-dev.txt"
+      # - name: Install user dependencies 🍼
+      #   uses: py-actions/py-dependency-install@v1
+      #   with:
+      #     path: "requirements-dev.txt"
 
       - name: Install Buildtools
         run: |
