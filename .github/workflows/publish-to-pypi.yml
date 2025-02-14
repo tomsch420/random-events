@@ -47,12 +47,8 @@ jobs:
         # Build your program with the given configuration
         # run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
         run: |
-          python3.8 -m build --wheel -n
           python3.9 -m build --wheel -n
-          python3.10 -m build --wheel -n
-          python3.11 -m build --wheel -n
-          python3.12 -m build --wheel -n
-  
+          
       - name: Repair wheel
         run: |
             auditwheel repair dist/*.whl
