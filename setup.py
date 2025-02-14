@@ -30,6 +30,16 @@ ext_modules = [
     ),
 ]
 
+# Function to read the version from random_events.__version__
+def get_version():
+    version_file = os.path.join(current_directory, 'src', 'random_events', '__init__.py')
+    with open(version_file, 'r') as f:
+        for line in f:
+            if line.startswith('__version__'):
+                delim = '"' if '"' in line else "'"
+                return line.split(delim)[1]
+    raise RuntimeError("Unable to find version string.")
+
 setup(
     # Project name:
     name='random_events',
@@ -37,7 +47,7 @@ setup(
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     # Project version number:
-    version='4.0.4',
+    version=get_version(),
     # List a license for the project, eg. MIT License
     license='MIT License',
     # Short description of your library:
