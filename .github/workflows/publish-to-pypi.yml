@@ -53,7 +53,7 @@ jobs:
         mv wheelhouse/*.whl dist/
 
     - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1.12.4
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         skip_existing: false
 
