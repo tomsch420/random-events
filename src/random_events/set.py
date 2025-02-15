@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing_extensions import Union
+from typing_extensions import Union, Hashable
 
 from .sigma_algebra import *
 import random_events_lib as rl
+
+HashMap: Dict[int, Hashable]
 
 
 class SetElement(AbstractSimpleSet):
@@ -13,27 +15,44 @@ class SetElement(AbstractSimpleSet):
 
     _cpp_object: rl.SetElement
 
-    def __init__(self, element, all_elements: Union[Set, SortedSet]):
+    hash_map: HashMap
+    """
+    A map that maps the hashes of each element in all_elements to the element.
+    """
+
+    all_elements: Tuple[Hashable]
+
+    def __init__(self, element: Optional[Hashable], all_elements: Iterable[Hashable],
+                 hash_map: Optional[HashMap] = None):
         """
         Create a new set element.
-        :param element: The element of the set. Can be a string, integer, float, or double.
+        :param element: The element of the set.
         :param all_elements: The set of all elements.
         """
-        self.all_elements = SortedSet(all_elements)
-        self.hash_map = {hash(elem): elem for elem in self.all_elements}
-        if element == EMPTY_SET_SYMBOL or element == -1:
-            self.element = EMPTY_SET_SYMBOL
-            self._cpp_object = rl.SetElement(set(self.hash_map.keys()))
-        elif element not in self.all_elements:
-            raise ValueError(f"Element {element} is not in the set of all elements.")
+
+        if hash_map is not None:
+            self.hash_map = hash_map
+            self.all_elements = tuple(hash_map.values())
+        else:
+            self.all_elements = tuple(all_elements)
+            self.hash_map = {hash(elem): elem for elem in self.all_elements}
+
+        if element is not None and element not in self.all_elements:
+            raise ValueError(f"Element {element} is not in the set of all elements. "
+                             f"All elements: {self.all_elements}")
         else:
             self.element = element
-            self.element_index = self.all_elements.index(element)
-            self._cpp_object = rl.SetElement(self.element_index, set(self.hash_map.keys()))
+
+            if element is None:
+                self.element_index = -1
+                self._cpp_object = rl.SetElement(set())
+            else:
+                self.element_index = self.all_elements.index(element)
+                self._cpp_object = rl.SetElement(self.element_index, set(self.hash_map.keys()))
 
     def _from_cpp(self, cpp_object):
         if cpp_object.element_index == -1:
-            return SetElement(-1, set())
+            return SetElement(None, set())
         return SetElement(list(self.hash_map.values())[cpp_object.element_index], self.all_elements)
 
     def contains(self, item: Self) -> bool:
@@ -45,9 +64,6 @@ class SetElement(AbstractSimpleSet):
     def __hash__(self):
         return hash(self.element)
 
-    def __lt__(self, other):
-        return self.element < other.element
-
     def __eq__(self, other):
         if self.element == other.element:
             return True
@@ -55,9 +71,6 @@ class SetElement(AbstractSimpleSet):
 
     def __repr__(self):
         return self.non_empty_to_string()
-
-    def __iter__(self):
-        return iter(self.all_elements)
 
     def to_json(self) -> Dict[str, Any]:
         return {**super().to_json(), "value": self.element, "content": list(self.all_elements)}
@@ -77,17 +90,14 @@ class Set(AbstractCompositeSet):
     Represents a set.
     """
 
-    simple_sets: SetElementContainer
-    """
-    The simple sets that make up the set.
-    """
+    simple_set_class = SetElement
+    _cpp_object: rl.Set
 
     def __init__(self, *simple_sets):
         """
         Create a new set.
         :param simple_sets: The simple sets that make up the set.
         """
-        super().__init__(*simple_sets)
         if len(simple_sets) > 0:
             self._cpp_object = rl.Set({simple_set._cpp_object for simple_set in self.simple_sets},
                                       self.simple_sets[0]._cpp_object.all_elements)

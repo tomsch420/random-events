@@ -9,8 +9,6 @@ str_set = {'a', 'c', 'b'}
 int_set = {1, 2, 3}
 float_set = {1.001, 2.3845, 3.4345345}
 
-EMPTY_SET = SetElement(EMPTY_SET_SYMBOL, set())
-
 class SetElementTestCase(unittest.TestCase):
 
     def test_intersection_with(self):
@@ -18,7 +16,7 @@ class SetElementTestCase(unittest.TestCase):
         b = SetElement('b', str_set)
 
         intersection_a_b = a.intersection_with(b)
-        self.assertEqual(intersection_a_b, EMPTY_SET)
+        self.assertTrue(intersection_a_b.is_empty())
         self.assertEqual(a.intersection_with(a), a)
 
     def test_complement(self):
@@ -32,9 +30,9 @@ class SetElementTestCase(unittest.TestCase):
         complement_b = b.complement()
         complement_c = c.complement()
         # complement_a1 = a1.complement()
-        self.assertEqual(complement_a, {b, c})
-        self.assertEqual(complement_b, {a, c})
-        self.assertEqual(complement_c, {a, b})
+        self.assertEqual({*complement_a}, {b, c})
+        self.assertEqual({*complement_b}, {a, c})
+        self.assertEqual({*complement_c}, {a, b})
         # self.assertEqual(complement_a1, {a2, a3})
 
     def test_contains(self):
