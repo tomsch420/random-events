@@ -11,6 +11,8 @@ class SetElement(AbstractSimpleSet):
     Represents a SetElement.
     """
 
+    _cpp_object: rl.SetElement
+
     def __init__(self, element, all_elements: Union[Set, SortedSet]):
         """
         Create a new set element.

@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Tuple, Dict, Any
 import random_events_lib as rl
 from sortedcontainers import SortedSet
-from typing_extensions import Self, Iterable, Optional, TYPE_CHECKING, Set
+from typing_extensions import Self, Iterable, Optional, TYPE_CHECKING, Set, Type
 from .utils import SubclassJSONSerializer
 
 EMPTY_SET_SYMBOL = "∅"
@@ -18,6 +18,7 @@ class AbstractSimpleSet(SubclassJSONSerializer):
 
     _cpp_object: rl.AbstractSimpleSet
 
+    @classmethod
     @abstractmethod
     def _from_cpp(self, cpp_object):
         """
@@ -38,7 +39,7 @@ class AbstractSimpleSet(SubclassJSONSerializer):
         """
         :return: The complement of this set as disjoint set of simple sets.
         """
-        return SortedSet({self._from_cpp(cpp_simple_set) for cpp_simple_set in self._cpp_object.complement()})
+        return tuple(self._from_cpp(cpp_simple_set) for cpp_simple_set in self._cpp_object.complement())
 
     def is_empty(self) -> bool:
         """
@@ -85,6 +86,9 @@ class AbstractSimpleSet(SubclassJSONSerializer):
     def __str__(self):
         return self.to_string()
 
+    def __repr__(self):
+        return self.to_string()
+
     def __lt__(self, other: Self):
         return self._cpp_object < other._cpp_object
 
@@ -107,29 +111,21 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
     AbstractCompositeSet is a set that is composed of a disjoint union of simple sets.
     """
-
-    simple_sets: SimpleSetContainer
     _cpp_object: rl.AbstractCompositeSet
+    simple_set_class: Type[AbstractSimpleSet]
 
-    def __init__(self, *simple_sets):
-        self.simple_sets = SortedSet(simple_sets)
 
     @classmethod
     @abstractmethod
     def _from_cpp(cls, cpp_object):
         raise NotImplementedError
 
-    @abstractmethod
-    def new_empty_set(self) -> Self:
+    @property
+    def simple_sets(self) -> SimpleSetContainer:
         """
-        Create a new empty set.
-
-        This method has to be implemented by the subclass and should take over all the relevant attributes to the new
-        set.
-
-        :return: A new empty set.
+        :return: The simple sets that make up the set.
         """
-        raise NotImplementedError
+        return tuple(self.simple_set_class._from_cpp(cpp_object) for cpp_object in self._cpp_object.simple_sets)
 
     def union_with(self, other: Self) -> Self:
         """
@@ -143,27 +139,6 @@ class AbstractCompositeSet(SubclassJSONSerializer):
     def __or__(self, other: Self):
         return self.union_with(other)
 
-    def intersection_with_simple_set(self, other: AbstractSimpleSet) -> Self:
-        """
-        Form the intersection of this object with a simple set.
-
-        :param other: The simple set
-        :return: The intersection of this set with the simple set
-        """
-        return self._from_cpp(self._cpp_object.intersection_with_simple_set(other._cpp_object))
-
-    def intersection_with_simple_sets(self, other: SimpleSetContainer) -> Self:
-        """
-        Form the intersection of this object with a set of simple sets.
-
-        :param other: The set of simple sets
-        :return: The intersection of this set with the set of simple sets
-        """
-        result = self.new_empty_set()
-        [result.simple_sets.update(self.intersection_with_simple_set(other_simple_set).simple_sets) for other_simple_set
-         in other]
-        return result
-
     def intersection_with(self, other: Self) -> Self:
         """
         Form the intersection of this object with another object.
@@ -174,25 +149,6 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
     def __and__(self, other):
         return self.intersection_with(other)
-
-    def difference_with_simple_set(self, other: AbstractSimpleSet) -> Self:
-        """
-        Form the difference with another composite set.
-        :param other: The other set
-        :return: The difference of this set with the other set
-        """
-        return self._from_cpp(self._cpp_object.difference_with(other._cpp_object))
-
-    def difference_with_simple_sets(self, other: SimpleSetContainer) -> Self:
-        """
-        Form the difference with a set of simple sets.
-        :param other: The set of simple sets
-        :return: The difference of this set with the other set
-        """
-        result = self.new_empty_set()
-        [result.simple_sets.update(self.difference_with_simple_set(other_simple_set).simple_sets) for other_simple_set
-         in other]
-        return result
 
     def difference_with(self, other: Self) -> Self:
         """
@@ -210,13 +166,6 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         :return: The complement of this set
         """
         return self._from_cpp(self._cpp_object.complement())
-
-    @abstractmethod
-    def complement_if_empty(self) -> Self:
-        """
-        :return: The complement of this if it is empty.
-        """
-        raise NotImplementedError
 
     def __invert__(self):
         return self.complement()
@@ -277,7 +226,6 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         """
         if simple_set.is_empty():
             return
-        self.simple_sets.add(simple_set)
         self._cpp_object.add_new_simple_set(simple_set._cpp_object)
 
     def simplify(self) -> Self:
@@ -289,7 +237,10 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         return self._from_cpp(self._cpp_object.simplify())
 
     def __eq__(self, other: Self):
-        return self.simple_sets._list == other.simple_sets._list
+        """
+        TODO Fix this when the C++ implementation is exposed more.
+        """
+        return {*self.simple_sets} == {*other.simple_sets}
 
     def __hash__(self):
         return hash(tuple(self.simple_sets))
@@ -311,6 +262,9 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         :param other: The other set
         :return: Rather this set is smaller than the other set
         """
+
+        return self.simple_sets < other.simple_sets
+
         for a, b in zip(self.simple_sets, other.simple_sets):
             if a == b:
                 continue
@@ -331,6 +285,6 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
 # Type definitions
 if TYPE_CHECKING:
-    SimpleSetContainer = SortedSet[AbstractSimpleSet]
+    SimpleSetContainer = Tuple[AbstractSimpleSet, ...]
 else:
-    SimpleSetContainer = SortedSet
+    SimpleSetContainer = Tuple

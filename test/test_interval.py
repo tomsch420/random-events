@@ -1,7 +1,7 @@
 import unittest
 
 from random_events.interval import *
-from random_events.sigma_algebra import AbstractSimpleSet
+from random_events.sigma_algebra import AbstractSimpleSet, AbstractCompositeSet
 
 
 class SimpleIntervalTestCase(unittest.TestCase):
@@ -29,11 +29,12 @@ class SimpleIntervalTestCase(unittest.TestCase):
     def test_complement(self):
         a = SimpleInterval()
         complement_a = a.complement()
-        self.assertEqual(complement_a, SortedSet([SimpleInterval(-float('inf'), float('inf'), Bound.OPEN, Bound.OPEN)]))
+        self.assertEqual(complement_a[0], SimpleInterval(-float('inf'), float('inf'), Bound.OPEN, Bound.OPEN))
         b = SimpleInterval(0, 1)
         complement_b = b.complement()
-        self.assertEqual(complement_b, SortedSet([SimpleInterval(-float('inf'), 0, Bound.OPEN, Bound.CLOSED),
-                                                  SimpleInterval(1, float('inf'), Bound.CLOSED, Bound.OPEN)]))
+        self.assertSetEqual({*complement_b}, {SimpleInterval(-float('inf'), 0, Bound.OPEN, Bound.CLOSED),
+                                                    SimpleInterval(1, float('inf'), Bound.CLOSED, Bound.OPEN)})
+
 
     def test_contains(self):
         a = SimpleInterval(0, 1)
@@ -49,6 +50,15 @@ class SimpleIntervalTestCase(unittest.TestCase):
         self.assertIsInstance(b, SimpleInterval)
         self.assertEqual(a, b)
 
+    def test_setter(self):
+        a = SimpleInterval(0, 1)
+        a.lower = 0.5
+        self.assertEqual(a.lower, 0.5)
+
+    def test_eq(self):
+        a = SimpleInterval(0, 1)
+        b = SimpleInterval(0, 1)
+        self.assertEqual(a, b)
 
 class IntervalTestCase(unittest.TestCase):
 
@@ -71,27 +81,6 @@ class IntervalTestCase(unittest.TestCase):
         b_c = Interval(b, c)
 
         intersection_a_d_b_c = a_d.intersection_with(b_c)
-        intersection_expected = Interval(SimpleInterval(0.5, 1))
-        self.assertEqual(intersection_a_d_b_c, intersection_expected)
-
-    def test_intersection_with_simple_set(self):
-        a = SimpleInterval(0, 1)
-        b = SimpleInterval(0.5, 1.5)
-        d = SimpleInterval(3, 4)
-        a_d = Interval(a, d)
-
-        intersection_a_d_b_c = a_d.intersection_with_simple_set(b)
-        intersection_expected = Interval(SimpleInterval(0.5, 1))
-        self.assertEqual(intersection_a_d_b_c, intersection_expected)
-
-    def test_intersection_with_set_of_simple_sets(self):
-        a = SimpleInterval(0, 1)
-        b = SimpleInterval(0.5, 1.5)
-        c = SimpleInterval(1.5, 2, Bound.CLOSED)
-        d = SimpleInterval(3, 4)
-        a_d = Interval(a, d)
-
-        intersection_a_d_b_c = a_d.intersection_with_simple_sets({b, c})
         intersection_expected = Interval(SimpleInterval(0.5, 1))
         self.assertEqual(intersection_a_d_b_c, intersection_expected)
 
@@ -128,26 +117,19 @@ class IntervalTestCase(unittest.TestCase):
 
         union_a_d_b_c = a_d.union_with(b_c)
         union_a_d_b_c_ = Interval(SimpleInterval(0, 2), SimpleInterval(3, 4))
-        self.assertEqual(union_a_d_b_c, union_a_d_b_c_)
+        self.assertSetEqual({*union_a_d_b_c}, {*union_a_d_b_c_})
         self.assertTrue(union_a_d_b_c.is_disjoint())
 
     def test_to_json(self):
         a = SimpleInterval(0, 1)
         b = Interval(a)
-        c = AbstractSimpleSet.from_json(b.to_json())
+        c = AbstractCompositeSet.from_json(b.to_json())
         self.assertIsInstance(c, Interval)
         self.assertEqual(b, c)
-
-    def test_partial_order(self):
-        a = open(2, 4) | open(5, 6)
-        b = open(3, 4) | open(4.5, 5.5)
-        self.assertTrue(a < b)
-        self.assertFalse(b < a)
 
     def test_contained_integers(self):
         a = open(2, 4) | closed_open(4.5, 6)
         self.assertEqual(list(a.contained_integers()), [3, 5])
-
 
 if __name__ == '__main__':
     unittest.main()

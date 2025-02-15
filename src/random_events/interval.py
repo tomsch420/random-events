@@ -3,12 +3,12 @@ import enum
 import math
 from typing import Dict, Any
 from sortedcontainers import SortedSet
-from typing_extensions import Self
+from typing_extensions import Self, Iterable
 from . import sigma_algebra
 import random_events_lib as rl
 
 
-class Bound(enum.Enum):
+class Bound(enum.IntEnum):
     """
     Enumerates the possible bounds for an interval.
     """
@@ -23,43 +23,13 @@ class Bound(enum.Enum):
     Represents an open bound, i. e. the element is excluded in the interval.
     """
 
-    def invert(self):
-        return Bound.CLOSED if self == Bound.OPEN else Bound.OPEN
-
-    def intersect(self, other: Self) -> Self:
-        """
-        Intersect with another border
-
-        :param other: The other border
-        :return: The intersection of the two borders
-        """
-        return Bound.OPEN if self == Bound.OPEN or other == Bound.OPEN else Bound.CLOSED
-
 
 class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     """
     Represents a simple interval.
     """
 
-    lower: float = 0
-    """
-    The lower bound of the interval.
-    """
-
-    upper: float = 0
-    """
-    The upper bound of the interval.
-    """
-
-    left: Bound = Bound.OPEN
-    """
-    The bound type of the lower bound.
-    """
-
-    right: Bound = Bound.OPEN
-    """
-    The bound type of the upper bound.
-    """
+    _cpp_object: rl.SimpleInterval
 
     def __init__(self, lower: float = 0, upper: float = 0, left: Bound = Bound.OPEN, right: Bound = Bound.OPEN):
         """
@@ -69,12 +39,51 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         :param left: The bound type of the lower bound.
         :param right: The bound type of the upper bound.
         """
-        self.lower = lower
-        self.upper = upper
-        self.left = left
-        self.right = right
-
         self._cpp_object = rl.SimpleInterval(lower, upper, left.value, right.value)
+
+    @property
+    def lower(self) -> float:
+        """
+        :return: The lower bound of the interval.
+        """
+        return self._cpp_object.lower
+
+    @lower.setter
+    def lower(self, value: float):
+        self._cpp_object.lower = value
+
+    @property
+    def upper(self) -> float:
+        """
+        :return: The upper bound of the interval.
+        """
+        return self._cpp_object.upper
+
+    @upper.setter
+    def upper(self, value: float):
+        self._cpp_object.upper = value
+
+    @property
+    def left(self) -> Bound:
+        """
+        :return: The bound type of the lower bound.
+        """
+        return Bound(self._cpp_object.left.value)
+
+    @left.setter
+    def left(self, value: Bound):
+        self._cpp_object.left = value.value
+
+    @property
+    def right(self) -> Bound:
+        """
+        :return: The bound type of the upper bound.
+        """
+        return Bound(self._cpp_object.right.value)
+
+    @right.setter
+    def right(self, value: Bound):
+        self._cpp_object.right = value.value
 
     @classmethod
     def _from_cpp(cls, cpp_object: rl.SimpleInterval) -> Self:
@@ -109,12 +118,6 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         right_bracket = ']' if self.right == Bound.CLOSED else ')'
         return f'{left_bracket}{self.lower}, {self.upper}{right_bracket}'
 
-    def __repr__(self):
-        return sigma_algebra.AbstractSimpleSet.to_string(self)
-
-    def __str__(self):
-        return sigma_algebra.AbstractSimpleSet.to_string(self)
-
     def to_json(self) -> Dict[str, Any]:
         return {**super().to_json(), 'lower': self.lower, 'upper': self.upper, 'left': self.left.name,
                 'right': self.right.name}
@@ -129,11 +132,10 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         """
         return (self.lower + self.upper) / 2
 
-    def contained_integers(self) -> int:
+    def contained_integers(self) -> Iterable[int]:
         """
         :return: Yield integers contained in the interval
         """
-
         rounded_lower = math.ceil(self.lower)
         if rounded_lower == self.lower and self.left == Bound.OPEN:
             rounded_lower += 1
@@ -152,25 +154,20 @@ class Interval(sigma_algebra.AbstractCompositeSet):
     """
     Represents an interval.
     """
-    simple_sets: SortedSet[SimpleInterval]
+
+    _cpp_object: rl.Interval
+    simple_set_class = SimpleInterval
 
     def __init__(self, *simple_sets):
         """
         Creates a new interval.
         :param simple_sets: The simple intervals that make up the interval.
         """
-        super().__init__(*simple_sets)
-        self._cpp_object = rl.Interval({simple_set._cpp_object for simple_set in self.simple_sets})
+        self._cpp_object = rl.Interval({simple_set._cpp_object for simple_set in simple_sets})
 
     @classmethod
     def _from_cpp(cls, cpp_object: rl.Interval) -> Self:
         return cls(*[SimpleInterval._from_cpp(cpp_simple_interval) for cpp_simple_interval in cpp_object.simple_sets])
-
-    def new_empty_set(self) -> Self:
-        return Interval()
-
-    def complement_if_empty(self) -> Self:
-        return Interval([SimpleInterval(float('-inf'), float('inf'), Bound.OPEN, Bound.OPEN)])
 
     def is_singleton(self):
         """
@@ -178,11 +175,11 @@ class Interval(sigma_algebra.AbstractCompositeSet):
         """
         return len(self.simple_sets) == 1 and self.simple_sets[0].is_singleton()
 
-    def contained_integers(self) -> int:
+    def contained_integers(self) -> Iterable[int]:
         """
         :return: Yield integers contained in the interval
         """
-        for simple_set in self.simple_sets:
+        for simple_set in sorted(self.simple_sets):
             yield from simple_set.contained_integers()
 
 
