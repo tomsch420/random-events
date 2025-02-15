@@ -16,12 +16,7 @@ class AbstractSimpleSet(SubclassJSONSerializer):
     Simple sets are sets that can be represented as a single object.
     """
 
-    @abstractmethod
-    def __init__(self):
-        """
-        Create a new simple set.
-        """
-        self._cpp_object = rl.AbstractSimpleSet
+    _cpp_object: rl.AbstractSimpleSet
 
     @abstractmethod
     def _from_cpp(self, cpp_object):
@@ -90,9 +85,8 @@ class AbstractSimpleSet(SubclassJSONSerializer):
     def __str__(self):
         return self.to_string()
 
-    @abstractmethod
-    def __lt__(self, other):
-        raise NotImplementedError
+    def __lt__(self, other: Self):
+        return self._cpp_object < other._cpp_object
 
     @abstractmethod
     def as_composite_set(self) -> AbstractCompositeSet:
@@ -115,11 +109,10 @@ class AbstractCompositeSet(SubclassJSONSerializer):
     """
 
     simple_sets: SimpleSetContainer
+    _cpp_object: rl.AbstractCompositeSet
 
     def __init__(self, *simple_sets):
         self.simple_sets = SortedSet(simple_sets)
-
-        self._cpp_object = rl.AbstractCompositeSet
 
     @classmethod
     @abstractmethod
