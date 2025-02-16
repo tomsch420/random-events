@@ -3,8 +3,7 @@ from abc import abstractmethod
 import random_events_lib as rl
 from typing_extensions import Self, Dict, Any, Optional, Iterable
 
-from .before_bindings.interval_old import singleton, SimpleInterval
-from .interval import reals, Interval, closed
+from .interval import reals, Interval, closed, singleton, SimpleInterval
 from .set import Set, SetElement
 from .sigma_algebra import AbstractCompositeSet
 from .utils import SubclassJSONSerializer, CPPWrapper
@@ -146,7 +145,9 @@ class Symbolic(Variable):
         :param name: The name.
         :param domain: The domain of the variable.
         """
-        super().__init__(name, domain)
+        # TODO this deepcopy here needs investigation.
+        #  The bug seems to be that not doing a deepcopy here destroys the domain as soon as the object is deleted.
+        super().__init__(name, domain.__deepcopy__())
 
         self._cpp_object = rl.Symbolic(self.name, self.domain._cpp_object)
 

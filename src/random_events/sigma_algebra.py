@@ -237,7 +237,7 @@ class AbstractCompositeSet(SubclassJSONSerializer, CPPWrapper, ABC):
         """
         TODO Fix this when the C++ implementation is exposed more.
         """
-        return {*self.simple_sets} == {*other.simple_sets}
+        return self.difference_with(other).is_empty() and other.difference_with(self).is_empty()
 
     def __hash__(self) -> int:
         return hash(tuple(self.simple_sets))

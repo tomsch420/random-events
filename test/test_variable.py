@@ -60,7 +60,7 @@ class InheritanceTestCase(unittest.TestCase):
         v1 = Continuous2("david", 2)
         event = SimpleEvent({v1: open_closed(-np.inf, 0)}).as_composite_set()
         event2 = event.complement()
-        v2 = event2.all_variables[0]
+        v2 = event2.variables[0]
         self.assertIsInstance(v2, Continuous2)
 
 
