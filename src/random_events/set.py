@@ -2,25 +2,45 @@ from __future__ import annotations
 
 from functools import cached_property
 
-from typing_extensions import Union, Hashable
+from typing_extensions import Hashable, Optional
 
 from .sigma_algebra import *
-import random_events_lib as rl
 
+# Type Definitions
 HashMap: Dict[int, Hashable]
 AllElements: Tuple[Hashable]
+
 
 class SetElement(AbstractSimpleSet):
     """
     Represents a SetElement.
+    A SetElement consists of an element and all possible elements.
+    It is necessary to know of all possible elements to determine the index and complement of any element.
+    All elements are a tuple to preserve ordering.
+
+    Beware that an empty set element is an invariant of this class and is represented by None.
+    All elements are not consistent with invariants of this class.
+
+    This class is a wrapper for the C++ class SetElement.
+    The elements in the C++ class are represented by their index in the all_elements tuple.
+    The C++ object gets as all elements the hash values of all elements.
+    A hash map is created to map the hash of each element to the element.
     """
 
     _cpp_object: rl.SetElement
+    """
+    The C++ object that this class wraps.
+    """
+
     all_elements: AllElements
+    """
+    The set of all elements.
+    """
 
     def __init__(self, element: Optional[Hashable], all_elements: Iterable[Hashable]):
         """
         Create a new set element.
+
         :param element: The element of the set.
         :param all_elements: The set of all elements.
         """
@@ -79,9 +99,19 @@ class SetElement(AbstractSimpleSet):
     def __deepcopy__(self):
         return SetElement(self.element, self.all_elements)
 
+
 class Set(AbstractCompositeSet):
     """
     Represents a set.
+
+    A set is a union of simple sets.
+
+    A set is simplified if no element is contained twice.
+
+    This class is a wrapper for the C++ class Set.
+
+    Beware that an empty set is an invariant of this class.
+    All elements are not consistent with invariants of this class.
     """
 
     simple_set_example: SetElement
@@ -113,12 +143,7 @@ class Set(AbstractCompositeSet):
 
     @property
     def hash_map(self) -> HashMap:
+        """
+        :return: A map that maps the hashes of each element in all_elements to the element.
+        """
         return {hash(elem): elem for elem in self.all_elements}
-
-
-
-# Type definitions
-if TYPE_CHECKING:
-    SetElementContainer = SortedSet[SetElement]
-else:
-    SetElementContainer = SortedSet

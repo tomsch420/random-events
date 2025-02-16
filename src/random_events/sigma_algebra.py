@@ -6,12 +6,12 @@ from typing import Tuple, Dict, Any
 import random_events_lib as rl
 from typing_extensions import Self, Iterable
 
-from .utils import SubclassJSONSerializer
+from .utils import SubclassJSONSerializer, CPPWrapper
 
 EMPTY_SET_SYMBOL = "∅"
 
 
-class AbstractSimpleSet(SubclassJSONSerializer):
+class AbstractSimpleSet(SubclassJSONSerializer, CPPWrapper):
     """
     Abstract class for simple sets.
 
@@ -21,16 +21,6 @@ class AbstractSimpleSet(SubclassJSONSerializer):
     """
 
     _cpp_object: rl.AbstractSimpleSet
-    """
-    The C++ object that this class wraps.
-    """
-
-    @abstractmethod
-    def _from_cpp(self, cpp_object):
-        """
-        Create a new instance of this class from a C++ object.
-        """
-        raise NotImplementedError
 
     def intersection_with(self, other: Self) -> Self:
         """
@@ -112,7 +102,7 @@ class AbstractSimpleSet(SubclassJSONSerializer):
         raise NotImplementedError
 
 
-class AbstractCompositeSet(SubclassJSONSerializer):
+class AbstractCompositeSet(SubclassJSONSerializer, CPPWrapper):
     """
     Abstract class for composite sets.
 
@@ -125,19 +115,12 @@ class AbstractCompositeSet(SubclassJSONSerializer):
     """
 
     _cpp_object: rl.AbstractCompositeSet
-    """
-    The C++ object that this class wraps.
-    """
 
     simple_set_example: AbstractSimpleSet
     """
     An example of a simple set that is used to create new simple sets. 
     Fields that are python only are read from this instance when reading from cpp.
     """
-
-    @abstractmethod
-    def _from_cpp(self, cpp_object):
-        raise NotImplementedError
 
     @property
     def simple_sets(self) -> SimpleSetContainer:

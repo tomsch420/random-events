@@ -156,8 +156,9 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
 class Interval(sigma_algebra.AbstractCompositeSet):
     """
     Represents an interval.
+
     An interval is a union of simple intervals.
-    If any operation is called on the interval, the resulting union will also be disjoint and simplified.
+
     A simplified interval is an interval where adjacent simple intervals are merged.
     """
 

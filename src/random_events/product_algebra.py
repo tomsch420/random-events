@@ -95,7 +95,6 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         type_error = TypeError(f"Value must be a SimpleSet, CompositeSet or something that can be converted to that."
                                f"Got value of {type(value)} instead."
                                f"Value is {value}.")
-        symbol_not_found_error = ValueError(f"Value {value} not in domain of variable {key}. Domain is {key.domain}")
 
         # trivial case
         if isinstance(value, AbstractSimpleSet):
@@ -487,12 +486,5 @@ class Event(AbstractCompositeSet):
         return cls(*simple_sets)
 
 
-# Type definitions
-if TYPE_CHECKING:
-    SimpleEventContainer = SortedSet[SimpleEvent]
-    EventContainer = SortedSet[Event]
-    VariableSet = SortedSet[Variable]
-else:
-    SimpleEventContainer = SortedSet
-    EventContainer = SortedSet
-    VariableSet = SortedSet
+
+VariableSet = Tuple[Variable, ...]

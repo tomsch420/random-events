@@ -1,24 +1,34 @@
 from abc import abstractmethod
+
 import random_events_lib as rl
+from typing_extensions import Self, Dict, Any, Optional, Iterable
 
-from typing_extensions import Self, Type, Dict, Any, Union, Optional
-
-from .interval import Interval, reals
+from .before_bindings.interval_old import singleton, SimpleInterval
+from .interval import reals, Interval, closed
 from .set import Set, SetElement
-from .sigma_algebra import AbstractCompositeSet, EMPTY_SET_SYMBOL
-from .utils import SubclassJSONSerializer
+from .sigma_algebra import AbstractCompositeSet
+from .utils import SubclassJSONSerializer, CPPWrapper
 
 
-class Variable(SubclassJSONSerializer):
+class Variable(SubclassJSONSerializer, CPPWrapper):
     """
     Parent class for all random variables.
     """
+
     name: str
+    """
+    The name of the variable.
+    """
+
     domain: AbstractCompositeSet
+    """
+    The domain of the variable.
+    """
 
     def __init__(self, name: str, domain: AbstractCompositeSet):
         """
         Construct a new random variable.
+
         :param name: The name of the variable.
         :param domain: The domain of the variable.
         """
@@ -26,15 +36,9 @@ class Variable(SubclassJSONSerializer):
         self.domain = domain
 
     def __lt__(self, other: Self) -> bool:
-        """
-        Returns True if self < other, False otherwise.
-        """
         return self.name < other.name
 
     def __gt__(self, other: Self) -> bool:
-        """
-        Returns True if self > other, False otherwise.
-        """
         return self.name > other.name
 
     def __hash__(self) -> int:
@@ -50,11 +54,7 @@ class Variable(SubclassJSONSerializer):
         return f"{self.__class__.__name__}({self.name})"
 
     def to_json(self) -> Dict[str, Any]:
-        return {
-            **super().to_json(),
-            "name": self.name,
-            "domain": self.domain.to_json()
-        }
+        return {**super().to_json(), "name": self.name, "domain": self.domain.to_json()}
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
@@ -71,12 +71,26 @@ class Variable(SubclassJSONSerializer):
     @classmethod
     @abstractmethod
     def _from_cpp(cls, cpp_object):
+        """
+        Create a variable from a C++ object.
+        """
         if type(cpp_object) == rl.Symbolic:
             return Symbolic._from_cpp(cpp_object)
         elif type(cpp_object) == rl.Continuous:
             return Continuous._from_cpp(cpp_object)
         elif type(cpp_object) == rl.Integer:
             return Integer._from_cpp(cpp_object)
+
+    @abstractmethod
+    def make_value(self, value: Any) -> AbstractCompositeSet:
+        """
+        Create a value of the domain from an arbitrary value.
+        This method tries to parse the value and wrap it in a composite set.
+
+        :param value: The value.
+        :return: The value wrapped in a composite set.
+        """
+        raise NotImplementedError
 
 
 class Continuous(Variable):
@@ -86,11 +100,11 @@ class Continuous(Variable):
     The domain of a continuous variable is the real line.
     """
 
-    def __init__(self, name: str, domain: AbstractCompositeSet = reals()):
+    def __init__(self, name: str, *args, **kwargs):
         """
         Construct a continuous variable.
+
         :param name: The name.
-        :param domain: The domain of the variable.
         """
         super().__init__(name, reals())
 
@@ -100,59 +114,71 @@ class Continuous(Variable):
     def is_numeric(self):
         return True
 
-    @classmethod
-    def _from_cpp(cls, cpp_object):
-        return cls(cpp_object.name)
+    def _from_cpp(self, cpp_object):
+        return self.__class__(cpp_object.name)
+
+    def make_value(self, value: Any) -> Interval:
+        if isinstance(value, (int, float)):
+            return singleton(value)
+        elif isinstance(value, SimpleInterval):
+            return value.as_composite_set()
+        elif isinstance(value, Interval):
+            return value
+        elif isinstance(value, Iterable):
+            return closed(*value)
+        else:
+            raise ValueError(f"Value {value} cannot be parsed to an interval.")
 
 
 class Symbolic(Variable):
     """
     Class for unordered, finite, discrete random variables.
 
-    The domain of a symbolic variable is a set of values from an enumeration.
+    The domain of a symbolic variable is a set.
     """
+
     domain: Set
 
-    def __init__(self, name: Optional[str] = None, domain: Union[Type[SetElement], Set] = None):
+    def __init__(self, name: Optional[str], domain: Set):
         """
         Construct a symbolic variable.
+
         :param name: The name.
-        :param domain: The enum class that lists all elements of the domain.
+        :param domain: The domain of the variable.
         """
-
-        if domain is None:
-            raise ValueError("The domain of a symbolic variable must be specified.")
-
-        if isinstance(domain, set):
-            self.domain = Set(*[SetElement(value, domain) for value in domain if value != EMPTY_SET_SYMBOL])
-        else:
-            self.domain = domain
-
-        super().__init__(name, self.domain)
+        super().__init__(name, domain)
 
         self._cpp_object = rl.Symbolic(self.name, self.domain._cpp_object)
-
-    def domain_type(self) -> Type[SetElement]:
-        return self.domain.simple_sets[0].all_elements
 
     @property
     def is_numeric(self):
         return False
 
-    @classmethod
-    def _from_cpp(cls, cpp_object):
-        return cls(cpp_object.name, Set._from_cpp(cpp_object.get_domain()))
+    def _from_cpp(self, cpp_object):
+        return self.__class__(cpp_object.name, self.domain._from_cpp(cpp_object.get_domain()))
 
-    def make_value(self, value) -> SetElement:
-        """
-        Create a set element from a value.
-        :param value: The value.
-        :return: The value wrapped in a set element.
-        """
-        if not hash(value) in self.domain.hash_map:
-            raise ValueError(f"Tried to add a value {value} to a symbolic variable {self.name} that is not in the "
-                             f"domain. The domain is {self.domain}.")
-        return SetElement(value, self.domain.simple_sets[0].all_elements)
+    def make_value(self, value) -> Set:
+        if not isinstance(value, Iterable):
+            value = [value]
+
+        parsed_value = []
+
+        # try to match the values to the set elements
+        for v in value:
+
+            # if the value is already a SetElement, append it
+            if isinstance(v, SetElement):
+                parsed_value.append(v)
+
+            # if not, try to find the matching element
+            else:
+                matches = [elem for elem in self.domain.simple_sets if elem.element == v]
+                if len(matches) == 0:
+                    raise ValueError(f"Value {value} not in domain of variable {self}. "
+                                     f"Domain is {self.domain}")
+                parsed_value += matches
+
+        return Set(*parsed_value)
 
 
 class Integer(Variable):
@@ -176,6 +202,8 @@ class Integer(Variable):
     def is_numeric(self):
         return True
 
-    @classmethod
-    def _from_cpp(cls, cpp_object):
-        return cls(cpp_object.name)
+    def _from_cpp(self, cpp_object):
+        return self.__class__(cpp_object.name)
+
+    def make_value(self, value: Any) -> Interval:
+        return Continuous.make_value(self, value)
