@@ -2,7 +2,6 @@ from __future__ import annotations
 import enum
 import math
 from typing import Dict, Any
-from sortedcontainers import SortedSet
 from typing_extensions import Self, Iterable
 from . import sigma_algebra
 import random_events_lib as rl
@@ -26,7 +25,8 @@ class Bound(enum.IntEnum):
 
 class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     """
-    Represents a simple interval.
+    A simple interval.
+    A simple interval is the convex hull of two points.
     """
 
     _cpp_object: rl.SimpleInterval
@@ -93,15 +93,18 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
         return Interval(self)
 
     def __lt__(self, other: Self):
+        # TODO: fix this when random_events_lib is fixed
         if self.lower == other.lower:
             return self.upper < other.upper
         return self.lower < other.lower
 
     def __eq__(self, other: Self):
+        # TODO: fix this when random_events_lib is fixed
         return self.lower == other.lower and self.upper == other.upper and self.left == other.left and self.right == other.right
 
     def is_singleton(self) -> bool:
         """
+        # TODO: fix this when random_events_lib is fixed
         :return: True if the interval is a singleton (contains only one value), False otherwise.
         """
         return self.lower == self.upper and self.left == Bound.CLOSED and self.right == Bound.CLOSED
@@ -153,10 +156,13 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
 class Interval(sigma_algebra.AbstractCompositeSet):
     """
     Represents an interval.
+    An interval is a union of simple intervals.
+    If any operation is called on the interval, the resulting union will also be disjoint and simplified.
+    A simplified interval is an interval where adjacent simple intervals are merged.
     """
 
     _cpp_object: rl.Interval
-    simple_set_class = SimpleInterval
+    simple_set_example = SimpleInterval()
 
     def __init__(self, *simple_sets):
         """

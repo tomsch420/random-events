@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 from abc import abstractmethod
 from typing import Tuple, Dict, Any
+
 import random_events_lib as rl
-from sortedcontainers import SortedSet
-from typing_extensions import Self, Iterable, Optional, TYPE_CHECKING, Set, Type
+from typing_extensions import Self, Iterable
+
 from .utils import SubclassJSONSerializer
 
 EMPTY_SET_SYMBOL = "∅"
@@ -14,11 +16,15 @@ class AbstractSimpleSet(SubclassJSONSerializer):
     Abstract class for simple sets.
 
     Simple sets are sets that can be represented as a single object.
+
+    This class is a wrapper for the C++ class AbstractSimpleSet.
     """
 
     _cpp_object: rl.AbstractSimpleSet
+    """
+    The C++ object that this class wraps.
+    """
 
-    @classmethod
     @abstractmethod
     def _from_cpp(self, cpp_object):
         """
@@ -96,6 +102,7 @@ class AbstractSimpleSet(SubclassJSONSerializer):
     def as_composite_set(self) -> AbstractCompositeSet:
         """
         Convert this simple set to a composite set.
+
         :return: The composite set
         """
         raise NotImplementedError
@@ -109,56 +116,64 @@ class AbstractCompositeSet(SubclassJSONSerializer):
     """
     Abstract class for composite sets.
 
-    AbstractCompositeSet is a set that is composed of a disjoint union of simple sets.
+    AbstractCompositeSet is a set composed of a union of simple sets.
+    If any operation is called on this, the resulting union will also be disjoint and simplified.
+    A simplified composite set is a set with as few simple sets in it as possible
+    to represent the necessary information.
+
+    This class wraps the C++ class AbstractCompositeSet.
     """
+
     _cpp_object: rl.AbstractCompositeSet
-    simple_set_class: Type[AbstractSimpleSet]
+    """
+    The C++ object that this class wraps.
+    """
 
+    simple_set_example: AbstractSimpleSet
+    """
+    An example of a simple set that is used to create new simple sets. 
+    Fields that are python only are read from this instance when reading from cpp.
+    """
 
-    @classmethod
     @abstractmethod
-    def _from_cpp(cls, cpp_object):
+    def _from_cpp(self, cpp_object):
         raise NotImplementedError
 
     @property
     def simple_sets(self) -> SimpleSetContainer:
         """
-        :return: The simple sets that make up the set.
+        :return: The simple sets contained in the union described by this set.
         """
-        return tuple(self.simple_set_class._from_cpp(cpp_object) for cpp_object in self._cpp_object.simple_sets)
+        return tuple(self.simple_set_example._from_cpp(cpp_object) for cpp_object in self._cpp_object.simple_sets)
 
     def union_with(self, other: Self) -> Self:
         """
-        Form the union of this object with another object.
-
         :param other: The other set
         :return: The union of this set with the other set
         """
         return self._from_cpp(self._cpp_object.union_with(other._cpp_object))
 
-    def __or__(self, other: Self):
+    def __or__(self, other: Self) -> Self:
         return self.union_with(other)
 
     def intersection_with(self, other: Self) -> Self:
         """
-        Form the intersection of this object with another object.
         :param other: The other set
         :return: The intersection of this set with the other set
         """
         return self._from_cpp(self._cpp_object.intersection_with(other._cpp_object))
 
-    def __and__(self, other):
+    def __and__(self, other) -> Self:
         return self.intersection_with(other)
 
     def difference_with(self, other: Self) -> Self:
         """
-        Form the difference with another composite set.
         :param other: The other set
         :return: The difference of this set with the other set
         """
         return self._from_cpp(self._cpp_object.difference_with(other._cpp_object))
 
-    def __sub__(self, other):
+    def __sub__(self, other) -> Self:
         return self.difference_with(other)
 
     def complement(self) -> Self:
@@ -167,30 +182,29 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         """
         return self._from_cpp(self._cpp_object.complement())
 
-    def __invert__(self):
+    def __invert__(self) -> Self:
         return self.complement()
 
     def is_empty(self) -> bool:
         """
-        Check if this set is empty.
+        :return: If this set is empty or not.
         """
         return self._cpp_object.is_empty()
 
     def contains(self, item) -> bool:
         """
-        Check if this set contains an item.
         :param item: The item to check
-        :return: Rather if the item is in the set or not
+        :return: If the item is in the set or not
         """
         for simple_set in self.simple_sets:
             if simple_set.contains(item):
                 return True
         return False
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         return self.contains(item)
 
-    def to_string(self):
+    def to_string(self) -> str:
         """
         :return: A string representation of this set.
         """
@@ -198,15 +212,15 @@ class AbstractCompositeSet(SubclassJSONSerializer):
             return EMPTY_SET_SYMBOL
         return " u ".join([simple_set.to_string() for simple_set in self.simple_sets])
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.to_string()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.to_string()
 
-    def is_disjoint(self):
+    def is_disjoint(self) -> bool:
         """
-        :return: Rather if the simple sets are disjoint or not.
+        :return: If the union described by this is disjoint or not.
         """
         return self._cpp_object.is_disjoint()
 
@@ -236,22 +250,22 @@ class AbstractCompositeSet(SubclassJSONSerializer):
         """
         return self._from_cpp(self._cpp_object.simplify())
 
-    def __eq__(self, other: Self):
+    def __eq__(self, other: Self) -> bool:
         """
         TODO Fix this when the C++ implementation is exposed more.
         """
         return {*self.simple_sets} == {*other.simple_sets}
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(tuple(self.simple_sets))
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[AbstractSimpleSet]:
         return iter(self.simple_sets)
 
     def __lt__(self, other: Self):
         """
         Compare this set with another set.
-
+        # TODO fix when the C++ implementation is exposed more.
         The sets are compared by comparing the simple sets in order.
         If the pair of simple sets are equal, the next pair is compared.
         If all pairs are equal, the set with the least amount of simple sets is considered smaller.
@@ -265,13 +279,6 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
         return self.simple_sets < other.simple_sets
 
-        for a, b in zip(self.simple_sets, other.simple_sets):
-            if a == b:
-                continue
-            else:
-                return a < b
-        return len(self.simple_sets) < len(other.simple_sets)
-
     def to_json(self) -> Dict[str, Any]:
         return {**super().to_json(), "simple_sets": [simple_set.to_json() for simple_set in self.simple_sets]}
 
@@ -284,7 +291,4 @@ class AbstractCompositeSet(SubclassJSONSerializer):
 
 
 # Type definitions
-if TYPE_CHECKING:
-    SimpleSetContainer = Tuple[AbstractSimpleSet, ...]
-else:
-    SimpleSetContainer = Tuple
+SimpleSetContainer = Tuple[AbstractSimpleSet, ...]

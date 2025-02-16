@@ -98,7 +98,7 @@ class SetTestCase(unittest.TestCase):
         a = SetElement('a', str_set)
         b = SetElement('b', str_set)
         s = Set(a, b)
-        self.assertEqual(s.hash_map, {hash(a): a, hash(b): b})
+        self.assertEqual(s.hash_map, {hash(a): "a", hash(b): "b", hash("c"): "c"})
 
 class SetTypeTestCase(unittest.TestCase):
     def test_int(self):
