@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Tuple, Dict, Any
 
 import random_events_lib as rl
@@ -102,7 +102,7 @@ class AbstractSimpleSet(SubclassJSONSerializer, CPPWrapper):
         raise NotImplementedError
 
 
-class AbstractCompositeSet(SubclassJSONSerializer, CPPWrapper):
+class AbstractCompositeSet(SubclassJSONSerializer, CPPWrapper, ABC):
     """
     Abstract class for composite sets.
 

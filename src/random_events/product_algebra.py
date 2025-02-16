@@ -3,7 +3,7 @@ import numpy as np
 import itertools
 from random_events.interval import SimpleInterval, singleton
 from sortedcontainers import SortedDict, SortedKeysView, SortedValuesView
-from typing_extensions import List, TYPE_CHECKING
+from typing_extensions import List, TYPE_CHECKING, Union
 import plotly.graph_objects as go
 
 from .sigma_algebra import *
@@ -17,10 +17,12 @@ if TYPE_CHECKING:
 else:
     VariableMapSuperClassType = SortedDict
 
+VariableMapKey = Union[str, Variable]
+
 
 class VariableMap(VariableMapSuperClassType):
     """
-    A map of variables to values.
+    A map from variables to values.
 
     Accessing a variable by name is also supported.
     """
@@ -29,30 +31,31 @@ class VariableMap(VariableMapSuperClassType):
     def variables(self) -> SortedKeysView[Variable]:
         return self.keys()
 
-    def variable_of(self, name: str) -> Variable:
+    @property
+    def assignments(self) -> SortedValuesView:
+        return self.values()
+
+    def get_variable(self, key: VariableMapKey) -> Variable:
         """
-        Get the variable with the given name.
-        :param name: The variable's name
-        :return: The variable itself
+        Get the variable matching the key.
+
+        :param key: The variable or its name.
+        :return: The matching variable.
         """
-        variable = [variable for variable in self.variables if variable.name == name]
+
+        if isinstance(key, Variable):
+            return key
+
+        variable = [variable for variable in self.variables if variable.name == key]
         if len(variable) == 0:
-            raise KeyError(f"Variable {name} not found in event {self}")
+            raise KeyError(f"Variable {key} not found in event {self}")
         return variable[0]
 
-    def __getitem__(self, item: Union[str, Variable]):
-        if isinstance(item, str):
-            item = self.variable_of(item)
-        return super().__getitem__(item)
+    def __getitem__(self, key: Union[str, Variable]):
+        return super().__getitem__(self.get_variable(key))
 
     def __setitem__(self, key: Union[str, Variable], value: Any):
-        if isinstance(key, str):
-            key = self.variable_of(key)
-
-        if not isinstance(key, Variable):
-            raise TypeError(f"Key must be a Variable if not already present, got {type(key)} instead.")
-
-        super().__setitem__(key, value)
+        super().__setitem__(self.get_variable(key), value)
 
     def __copy__(self):
         return self.__class__({variable: value for variable, value in self.items()})
@@ -65,100 +68,43 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
     A simple event is logically equivalent to a conjunction of assignments.
     """
 
+    _cpp_object: rl.SimpleEvent
+
     def __init__(self, *args, **kwargs):
         """
         Create a new simple event.
+
         :param args: The assignments of variables to values
         """
         VariableMap.__init__(self, *args, **kwargs)
         for key, value in self.items():
             self._setitem_without_cpp(key, value)
-
         self._update_cpp_object()
 
     def _update_cpp_object(self):
-        self._cpp_object = rl.SimpleEvent({variable._cpp_object: value._cpp_object for variable, value in self.items()})
+        self._cpp_object = rl.SimpleEvent({variable._cpp_object: value._cpp_object
+                                           for variable, value in self.items()})
 
-    def get_variable_by_name(self, name: str):
-        return [v for v in self.variables if v.name == name][0]
-
-    def _setitem_without_cpp(self, key: Variable, value: Union[AbstractSimpleSet, AbstractCompositeSet, Iterable, Any]):
+    def _setitem_without_cpp(self, key: VariableMapKey, value: Any):
         """
         Set the value of a variable in the event.
-        Also allows for assigning variables to values outside of the objects of this package. If this is the case,
-        this tries to convert the value to a SimpleSet or CompositeSet.
+        Also allows for assigning variables to values outside the classes of this package.
+        If this is the case, this tries to convert the value to a CompositeSet.
 
-        :param key: The variable to set the value for
+        :param key: The variable (or its name) to set the value for
         :param value: The value to set
         """
+        key = self.get_variable(key)
+        value = key.make_value(value)
+        super().__setitem__(key, value)
 
-        type_error = TypeError(f"Value must be a SimpleSet, CompositeSet or something that can be converted to that."
-                               f"Got value of {type(value)} instead."
-                               f"Value is {value}.")
-
-        # trivial case
-        if isinstance(value, AbstractSimpleSet):
-            super().__setitem__(key, value.as_composite_set())
-        elif isinstance(value, AbstractCompositeSet):
-            super().__setitem__(key, value)
-
-        # try to convert symbolic values
-        elif isinstance(key, Symbolic):
-            if not isinstance(value, Iterable):
-                value = [value]
-
-            parsed_value = []
-
-            # try to match the values to the set elements
-            for v in value:
-
-                # if the value is already a SetElement, append it
-                if isinstance(v, SetElement):
-                    parsed_value.append(v)
-
-                # if not, try to find the matching element
-                else:
-                    matches = [elem for elem in key.domain if elem.element == v]
-                    if len(matches) == 0:
-                        raise symbol_not_found_error
-                    parsed_value += matches
-
-            value = Set(*parsed_value)
-            super().__setitem__(key, value)
-
-        # try to convert continuous values
-        elif isinstance(key, (Continuous, Integer)):
-            if isinstance(value, Iterable):
-                value = SimpleInterval(min(value), max(value)).as_composite_set()
-            elif isinstance(value, (float, int)):
-                value = singleton(value)
-            else:
-                raise type_error
-            super().__setitem__(key, value)
-        else:
-            raise type_error
-
-
-    def _from_cpp(self, cpp_object):
-        variables = cpp_object.variable_map.items()
-        result = {}
-        og_variables = {v.name: v for v in self.variables}
-        for variable, value in variables:
-            original_variable = og_variables.get(variable.name)
-            if original_variable:
-                if isinstance(original_variable, Continuous):
-                    value_back = Interval._from_cpp(value)
-                else:
-                    value_back = original_variable.domain._from_cpp(value)
-                result[original_variable] = value_back
+    def _from_cpp(self, cpp_object: rl.SimpleEvent):
+        result = {variable: value._from_cpp(cpp_object.get_value(variable._cpp_object)) for variable, value in
+                  self.items()}
         return SimpleEvent(result)
 
     def as_composite_set(self) -> Event:
         return Event(self)
-
-    @property
-    def assignments(self) -> SortedValuesView:
-        return self.values()
 
     def contains(self, item: Tuple) -> bool:
         for assignment, value in zip(self.assignments, item):
@@ -169,11 +115,11 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
     def __hash__(self):
         return hash(tuple(self.items()))
 
-    def __setitem__(self, key: Variable, value: Union[AbstractSimpleSet, AbstractCompositeSet, Iterable, Any]):
+    def __setitem__(self, key: Variable, value: Any):
         """
-        Set the value of a variable in the event.
-        Also allows for assigning variables to values outside of the objects of this package. If this is the case,
-        this tries to convert the value to a SimpleSet or CompositeSet.
+        Set the value of a variable.
+        Also allows for assigning variables to values outside the classes of this package.
+        If this is the case, this tries to convert the value to an instance of AbstractCompositeSet.
 
         :param key: The variable to set the value for
         :param value: The value to set
@@ -373,7 +319,6 @@ class Event(AbstractCompositeSet):
         Create a new event.
         :param simple_sets: The simple events that make up the event.
         """
-        super().__init__(*simple_sets)
         self._cpp_object = rl.Event({simple_set._cpp_object for simple_set in self.simple_sets})
         self.fill_missing_variables()
 
