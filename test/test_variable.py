@@ -2,12 +2,12 @@ import unittest
 
 import numpy as np
 
+from random_events.interval import *
 from random_events.product_algebra import SimpleEvent
 from random_events.variable import *
-from random_events.interval import *
-
 
 str_set = {'a', 'c', 'b'}
+
 
 class ContinuousTestCase(unittest.TestCase):
     x = Continuous("x")
@@ -47,12 +47,14 @@ class SymbolicTestCase(unittest.TestCase):
         x_ = Variable.from_json(x.to_json())
         self.assertEqual(x, x_)
 
+
 class Continuous2(Continuous):
     mean: int
 
     def __init__(self, name, mean):
         super().__init__(name)
         self.mean = mean
+
 
 class InheritanceTestCase(unittest.TestCase):
 
@@ -62,6 +64,28 @@ class InheritanceTestCase(unittest.TestCase):
         event2 = event.complement()
         v2 = event2.variables[0]
         self.assertIsInstance(v2, Continuous2)
+
+
+class HashableTestClass:
+
+    value: int
+
+    def __init__(self, value):
+        self.value = value
+
+    def __hash__(self):
+        return hash(self.value)
+
+class CustomObjectSetTestCase(unittest.TestCase):
+
+    def test_variables(self):
+        e1 = HashableTestClass(1)
+        e2 = HashableTestClass(2)
+        e3 = HashableTestClass(3)
+        x = Symbolic("x", Set.from_iterable({e1, e2, e3}))
+        self.assertEqual(x.name, "x")
+        se = SimpleEvent({x: e1}).as_composite_set()
+        self.assertFalse(se.is_empty())
 
 
 if __name__ == '__main__':

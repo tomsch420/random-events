@@ -1,10 +1,13 @@
 from __future__ import annotations
+
 import enum
 import math
 from typing import Dict, Any
-from typing_extensions import Self, Iterable
-from . import sigma_algebra
+
 import random_events_lib as rl
+from typing_extensions import Self, Iterable
+
+from . import sigma_algebra
 
 
 class Bound(enum.IntEnum):

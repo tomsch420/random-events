@@ -1,21 +1,16 @@
 from __future__ import annotations
 
+import itertools
 import textwrap
 
 import numpy as np
-import itertools
-
-from OpenGL.raw.EGL.EXT.output_base import eglQueryOutputLayerStringEXT
-
-from random_events.interval import SimpleInterval, singleton
-from sortedcontainers import SortedDict, SortedKeysView, SortedValuesView, SortedSet
-from typing_extensions import List, TYPE_CHECKING, Union, Set as teSet
 import plotly.graph_objects as go
+from sortedcontainers import SortedDict, SortedValuesView, SortedSet
+from typing_extensions import List, TYPE_CHECKING, Union, Set as teSet
 
 from .sigma_algebra import *
 from .variable import *
 from .variable import Variable
-
 
 # Type definitions
 if TYPE_CHECKING:
@@ -89,8 +84,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         self._update_cpp_object()
 
     def _update_cpp_object(self):
-        self._cpp_object = rl.SimpleEvent({variable._cpp_object: value._cpp_object
-                                           for variable, value in self.items()})
+        self._cpp_object = rl.SimpleEvent({variable._cpp_object: value._cpp_object for variable, value in self.items()})
 
     def _setitem_without_cpp(self, key: VariableMapKey, value: Any):
         """
@@ -102,8 +96,8 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
 
     def _from_cpp(self, cpp_object: rl.SimpleEvent):
         variables = [variable for variable in self.variables if variable._cpp_object in cpp_object.variable_map]
-        result = {variable: self[variable]._from_cpp(cpp_object.variable_map[variable._cpp_object])
-                  for variable in variables}
+        result = {variable: self[variable]._from_cpp(cpp_object.variable_map[variable._cpp_object]) for variable in
+                  variables}
         return SimpleEvent(result)
 
     def as_composite_set(self) -> Event:
@@ -160,10 +154,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
 
     def non_empty_to_string(self) -> str:
         return ("{\n" + textwrap.indent(
-            ",\n".join(
-                f"{variable.name} ∈ {assignment}" for variable, assignment in self.items()),
-            "    ")
-            + "\n}")
+            ",\n".join(f"{variable.name} ∈ {assignment}" for variable, assignment in self.items()), "    ") + "\n}")
 
     def variables_to_json(self) -> List:
         return [variable.to_json() for variable in self.keys()]
@@ -172,13 +163,10 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         return [assignment.to_json() for assignment in self.values()]
 
     def to_json(self) -> Dict[str, Any]:
-        return {**super().to_json(),
-                "variables": self.variables_to_json(),
-                "assignments": self.assignments_to_json()}
+        return {**super().to_json(), "variables": self.variables_to_json(), "assignments": self.assignments_to_json()}
 
     def to_json_assignments_only(self) -> Dict[str, Any]:
-        return {**super().to_json(),
-                "assignments": self.assignments_to_json()}
+        return {**super().to_json(), "assignments": self.assignments_to_json()}
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
@@ -195,8 +183,8 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         """
         Plot the event.
         """
-        assert all(isinstance(variable, Continuous) for variable in self.keys()), \
-            "Plotting is only supported for events that consist of only continuous variables."
+        assert all(isinstance(variable, Continuous) for variable in
+                   self.keys()), "Plotting is only supported for events that consist of only continuous variables."
         if len(self.keys()) == 1:
             return self.plot_1d()
         if len(self.keys()) == 2:
@@ -235,13 +223,12 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
 
         # for every atomic interval
         for interval_combination in interval_combinations:
-
             # plot a rectangle
             points = np.asarray(list(itertools.product(*[[axis.lower, axis.upper] for axis in interval_combination])))
             y_points = points[:, 1]
             y_points[len(y_points) // 2:] = y_points[len(y_points) // 2:][::-1]
             xs.extend(points[:, 0].tolist() + [points[0, 0], None])
-            ys.extend(y_points.tolist()+ [y_points[0], None])
+            ys.extend(y_points.tolist() + [y_points[0], None])
 
         return [go.Scatter(x=xs, y=ys, mode="lines", name="Event", fill="toself")]
 
@@ -260,10 +247,8 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
 
         # for every atomic interval
         for simple_event in simple_events:
-
             # Create a 3D mesh trace for the rectangle
-            traces.append(go.Mesh3d(
-                # 8 vertices of a cube
+            traces.append(go.Mesh3d(# 8 vertices of a cube
                 x=[simple_event[x].lower, simple_event[x].lower, simple_event[x].upper, simple_event[x].upper,
                    simple_event[x].lower, simple_event[x].lower, simple_event[x].upper, simple_event[x].upper],
                 y=[simple_event[y].lower, simple_event[y].upper, simple_event[y].upper, simple_event[y].lower,
@@ -271,11 +256,8 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
                 z=[simple_event[z].lower, simple_event[z].lower, simple_event[z].lower, simple_event[z].lower,
                    simple_event[z].upper, simple_event[z].upper, simple_event[z].upper, simple_event[z].upper],
                 # i, j and k give the vertices of triangles
-                i=[7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
-                j=[3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
-                k=[0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
-                flatshading=True
-            ))
+                i=[7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2], j=[3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
+                k=[0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6], flatshading=True))
         return traces
 
     def plotly_layout(self) -> Dict:
@@ -285,14 +267,10 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         if len(self.variables) == 1:
             result = {"xaxis_title": self.variables[0].name}
         elif len(self.variables) == 2:
-            result = {"xaxis_title": self.variables[0].name,
-                      "yaxis_title": self.variables[1].name}
+            result = {"xaxis_title": self.variables[0].name, "yaxis_title": self.variables[1].name}
         elif len(self.variables) == 3:
-            result = dict(scene=dict(
-                xaxis_title=self.variables[0].name,
-                yaxis_title=self.variables[1].name,
-                zaxis_title=self.variables[2].name)
-            )
+            result = dict(scene=dict(xaxis_title=self.variables[0].name, yaxis_title=self.variables[1].name,
+                zaxis_title=self.variables[2].name))
         else:
             raise NotImplementedError("Plotting is only supported for two and three dimensional events")
 
@@ -448,13 +426,11 @@ class Event(AbstractCompositeSet):
     def to_json(self) -> Dict[str, Any]:
         variables = [variable.to_json() for variable in self.variables]
         simple_sets = [simple_set.to_json_assignments_only() for simple_set in self.simple_sets]
-        return {**SubclassJSONSerializer.to_json(self),
-                "variables": variables, "simple_sets": simple_sets}
+        return {**SubclassJSONSerializer.to_json(self), "variables": variables, "simple_sets": simple_sets}
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any]) -> Self:
         variables = [Variable.from_json(variable) for variable in data["variables"]]
-        simple_sets = [SimpleEvent.from_json_given_variables(simple_set, variables) for simple_set in data["simple_sets"]]
+        simple_sets = [SimpleEvent.from_json_given_variables(simple_set, variables) for simple_set in
+                       data["simple_sets"]]
         return cls(*simple_sets)
-
-
