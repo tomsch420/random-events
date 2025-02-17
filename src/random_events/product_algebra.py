@@ -128,8 +128,9 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         :param key: The variable (or its name) to set the value for
         :param value: The value to set
         """
+        key = self.get_variable(key)
         self._setitem_without_cpp(key, value)
-        self._update_cpp_object()
+        self._cpp_object.variable_map[key._cpp_object] = self[key]._cpp_object
 
     def __lt__(self, other: Self):
         # TODO fix this when the C++ implementation is fixed
@@ -276,7 +277,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
 
         return result
 
-    def fill_missing_variables(self, variables: VariableSet):
+    def fill_missing_variables(self, variables: Iterable[Variable]):
         """
         Fill this with the variables that are not in self but in `variables`.
         The variables are mapped to their domain.
@@ -356,11 +357,12 @@ class Event(AbstractCompositeSet):
         if variables is None:
             variables = set()
 
-        variables = SortedSet(variables)
-
-        all_variables = self.variables | variables
+        all_variables = self.variables | set(variables)
         self.simple_set_example.fill_missing_variables(all_variables)
-        [simple_set.fill_missing_variables(all_variables) for simple_set in self.simple_sets]
+
+        for simple_set in self.simple_sets:
+            simple_set.fill_missing_variables(all_variables)
+
 
     def marginal(self, variables: VariableSet) -> Event:
         """
