@@ -1,4 +1,5 @@
 import unittest
+from enum import IntEnum
 
 import numpy as np
 
@@ -46,6 +47,15 @@ class SymbolicTestCase(unittest.TestCase):
         x = Symbolic("x", Set(a, b, c))
         x_ = Variable.from_json(x.to_json())
         self.assertEqual(x, x_)
+
+    @unittest.skip("David fix this. Somehow, the variables domain gets lost here. "
+                   "I guess this is some r_value/l_value interaction.")
+    def test_empty_domain(self):
+        def make_variable():
+            domain_cls = IntEnum('Domain', {'A': 1, 'B': 2})
+            x = Symbolic("x", Set.from_iterable(domain_cls))
+            return x
+        self.assertEqual(len(make_variable().domain.simple_sets), 2)
 
 
 class Continuous2(Continuous):

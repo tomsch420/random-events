@@ -133,7 +133,6 @@ class EventTestCase(unittest.TestCase):
         self.assertEqual(marginal, SimpleEvent({self.x: closed(0, 2) | closed(5, 6)}).as_composite_set())
         fig = go.Figure(marginal.plot())  # fig.show()
 
-    @unittest.skip("David fix this")
     def test_marginal_event_symbolic(self):
         a = Symbolic("a", str_set_domain)
         event = SimpleEvent({self.a: "a", self.b: "b"}).as_composite_set() | SimpleEvent(
