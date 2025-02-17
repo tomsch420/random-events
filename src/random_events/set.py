@@ -80,9 +80,6 @@ class SetElement(AbstractSimpleSet):
     def __hash__(self):
         return hash(self.element)
 
-    def __eq__(self, other):
-        return self.element == other.element
-
     def __repr__(self):
         return self.non_empty_to_string()
 

@@ -52,9 +52,8 @@ class AbstractSimpleSet(SubclassJSONSerializer, CPPWrapper):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def __hash__(self):
-        raise NotImplementedError
+        return hash(self._cpp_object)
 
     def non_empty_to_string(self) -> str:
         """
@@ -87,6 +86,9 @@ class AbstractSimpleSet(SubclassJSONSerializer, CPPWrapper):
 
     def __lt__(self, other: Self):
         return self._cpp_object < other._cpp_object
+
+    def __eq__(self, other):
+        return self._cpp_object == other._cpp_object
 
     @abstractmethod
     def as_composite_set(self) -> AbstractCompositeSet:
@@ -234,10 +236,7 @@ class AbstractCompositeSet(SubclassJSONSerializer, CPPWrapper, ABC):
         return self._from_cpp(self._cpp_object.simplify())
 
     def __eq__(self, other: Self) -> bool:
-        """
-        TODO Fix this when the C++ implementation is exposed more.
-        """
-        return self.difference_with(other).is_empty() and other.difference_with(self).is_empty()
+        return self._cpp_object == other._cpp_object
 
     def __hash__(self) -> int:
         return hash(tuple(self.simple_sets))
@@ -248,7 +247,6 @@ class AbstractCompositeSet(SubclassJSONSerializer, CPPWrapper, ABC):
     def __lt__(self, other: Self):
         """
         Compare this set with another set.
-        # TODO fix when the C++ implementation is exposed more.
         The sets are compared by comparing the simple sets in order.
         If the pair of simple sets are equal, the next pair is compared.
         If all pairs are equal, the set with the least amount of simple sets is considered smaller.
@@ -260,7 +258,7 @@ class AbstractCompositeSet(SubclassJSONSerializer, CPPWrapper, ABC):
         :return: Rather this set is smaller than the other set
         """
 
-        return self.simple_sets < other.simple_sets
+        return self._cpp_object < other._cpp_object
 
     def to_json(self) -> Dict[str, Any]:
         return {**super().to_json(), "simple_sets": [simple_set.to_json() for simple_set in self.simple_sets]}
