@@ -130,7 +130,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         """
         key = self.get_variable(key)
         self._setitem_without_cpp(key, value)
-        self._cpp_object.variable_map[key._cpp_object] = self[key]._cpp_object
+        self._update_cpp_object()
 
     def __lt__(self, other: Self):
         # TODO fix this when the C++ implementation is fixed

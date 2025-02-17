@@ -58,7 +58,7 @@ class SymbolicTestCase(unittest.TestCase):
         self.assertEqual(len(make_variable().domain.simple_sets), 2)
 
 
-class Continuous2(Continuous):
+class InheritedContinuous(Continuous):
     mean: int
 
     def __init__(self, name, mean):
@@ -69,11 +69,11 @@ class Continuous2(Continuous):
 class InheritanceTestCase(unittest.TestCase):
 
     def test_conversion(self):
-        v1 = Continuous2("david", 2)
+        v1 = InheritedContinuous("david", 2)
         event = SimpleEvent({v1: open_closed(-np.inf, 0)}).as_composite_set()
         event2 = event.complement()
         v2 = event2.variables[0]
-        self.assertIsInstance(v2, Continuous2)
+        self.assertIsInstance(v2, InheritedContinuous)
 
 
 class HashableTestClass:
