@@ -197,27 +197,12 @@ class EventTestCase(unittest.TestCase):
         print(e)
         self.assertTrue(y in e.variables)
 
+    def test_fill_missing_variables_pure(self):
+        e = SimpleEvent({self.x: closed(0, 1) | closed(3, 4)}).as_composite_set()
+        y = Continuous("y")
+        e = e.fill_missing_variables_pure((y,))
+        self.assertTrue(y in e.variables)
 
-
-#
-# class NoneTypeObjectInDifferenceTestCase(unittest.TestCase):
-#     x: Continuous = Continuous("x")
-#     y: Continuous = Continuous("y")
-#     event_1 = Event(SimpleEvent({x: SimpleInterval(0, 0.25, Bound.CLOSED, Bound.CLOSED),
-#                                  y: SimpleInterval(0.25, 1, Bound.CLOSED, Bound.CLOSED)}),
-#                     SimpleEvent({x: SimpleInterval(0.75, 1, Bound.CLOSED, Bound.CLOSED),
-#                                  y: SimpleInterval(0.75, 1, Bound.CLOSED, Bound.CLOSED)}))
-#     event_2 = SimpleEvent({x: SimpleInterval(0., 0.25, Bound.CLOSED, Bound.CLOSED),
-#                            y: SimpleInterval(0., 1, Bound.CLOSED, Bound.CLOSED)}).as_composite_set()
-#
-#     def test_union(self):
-#         union = self.event_1 | self.event_2
-#         union_by_hand = Event(SimpleEvent({self.x: SimpleInterval(0, 0.25, Bound.CLOSED, Bound.CLOSED),
-#                                            self.y: SimpleInterval(0., 1, Bound.CLOSED, Bound.CLOSED)}),
-#                               SimpleEvent({self.x: SimpleInterval(0.75, 1, Bound.CLOSED, Bound.CLOSED),
-#                                            self.y: SimpleInterval(0.75, 1, Bound.CLOSED, Bound.CLOSED)}))
-#         self.assertEqual(union, union_by_hand)
-#
 
 class OperationsWithEmptySetsTestCase(unittest.TestCase):
     x: Continuous = Continuous("x")
@@ -253,7 +238,6 @@ class OperationsWithEmptySetsTestCase(unittest.TestCase):
         empty_event = Event()
         diff = event.difference_with(empty_event)
         self.assertEqual(diff, event)
-
 
 
 if __name__ == '__main__':

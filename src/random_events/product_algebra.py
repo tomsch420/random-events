@@ -279,7 +279,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
 
     def fill_missing_variables(self, variables: Iterable[Variable]):
         """
-        Fill this with the variables that are not in self but in `variables`.
+        Fill this with the variables that are not in self but in `variables` in-place.
         The variables are mapped to their domain.
 
         :param variables: The variables to fill the event with
@@ -287,6 +287,14 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         for variable in variables:
             if variable not in self:
                 self[variable] = variable.domain
+
+    def fill_missing_variables_pure(self, variables: Iterable[Variable]):
+        """
+        Fill this with the variables that are not in self but in `variables`.
+        The variables are mapped to their domain.
+        """
+        return SimpleEvent({variable: self.get(variable, variable.domain) for variable in variables})
+
 
     def __deepcopy__(self):
         return self.__class__({variable: assignment.__deepcopy__() for variable, assignment in self.items()})
@@ -362,6 +370,20 @@ class Event(AbstractCompositeSet):
 
         for simple_set in self.simple_sets:
             simple_set.fill_missing_variables(all_variables)
+
+    def fill_missing_variables_pure(self, variables: Optional[Iterable[Variable]] = None):
+        """
+        Fill all simple sets with the missing variables.
+
+        :param variables: The variables to fill the event with.
+        """
+
+        if variables is None:
+            variables = set()
+
+        all_variables = self.variables | set(variables)
+
+        return Event(*[simple_set.fill_missing_variables_pure(all_variables) for simple_set in self.simple_sets])
 
 
     def marginal(self, variables: VariableSet) -> Event:
