@@ -1,4 +1,5 @@
 pybind11
+plotly
 jupyter-book
 jupyter
 pillow
