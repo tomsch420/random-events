@@ -19,8 +19,6 @@ build:
 
 python:
   install:
-    # Update pip
-    - method: pip
     - requirements: docs/requirements.txt
     - method: pip
       path: .
