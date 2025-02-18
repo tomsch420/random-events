@@ -1,7 +1,13 @@
--r ../requirements-dev.txt
 jupyter-book
+jupyter
+pillow
+polytope
+ortools
+scipy
+cvxopt
 matplotlib
 numpy
 ghp-import
 sphinx-proof
 sphinx-autoapi
+random-events
