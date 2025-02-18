@@ -1,5 +1,5 @@
-pybind11
-plotly
+-r ../requirements.txt
+
 jupyter-book
 jupyter
 pillow
@@ -8,7 +8,6 @@ ortools
 scipy
 cvxopt
 matplotlib
-numpy
 ghp-import
 sphinx-proof
 sphinx-autoapi
