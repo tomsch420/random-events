@@ -14,7 +14,7 @@ build:
     - graphviz
   jobs:
     install_requirements:
-        - "pip install -r docs/requirements.txt"
+      - "pip install -r docs/requirements.txt"
     pre_build:
       # Generate the Sphinx configuration for this Jupyter Book so it builds.
       - "jupyter-book config sphinx docs/"
