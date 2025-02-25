@@ -51,12 +51,12 @@ We can express this image as an event that can be reasoned about.
 image = np.array(image.resize((18, 17), Image.NEAREST))
 colors = np.unique(image.reshape((image.shape[0] * image.shape[1], image.shape[2])), axis=0)[1:]
 def indices_to_complex_event(indices: np.array) -> Event:
-    result = Event()
+    result = []
     for index in indices:
-        event = SimpleEvent({y: closed_open(-index[0] - 1, -index[0]),
-                       x: closed_open(index[1], index[1] + 1)})
-        result |= event.as_composite_set()
-    return result.simplify()
+        event = SimpleEvent({y: closed_open(-index[0] - 1., -index[0]),
+                       x: closed_open(index[1], index[1] + 1.)})
+        result.append(event)
+    return Event(*result).make_disjoint()
 
 fig = go.Figure()
 

@@ -113,14 +113,13 @@ print(open(0, 1))
 Since a sigma algebra requires more information than it is stored in regular python sets, the `SetElement` and `Set` 
 classes are used.
 A set element is a simple set, and a set is a composite set.
-Whenever you want to create a set element, you have to create an enum first that specifies all possible set elements.
-The empty set should be represented by the value `-1`.
+Whenever you want to create a set, just pass it some iterable, for example, an enum.
 
 ```{code-cell} ipython3
 :tags: []
+from enum import IntEnum
 
-class Symbol(SetElement):
-    EMPTY_SET = -1
+class Symbol(IntEnum):
     APPLE = 0
     DOG = 1
     RAIN = 2
@@ -131,8 +130,8 @@ Now you can interact with sets and set elements.
 ```{code-cell} ipython3
 :tags: []
 
-s1 = Set(Symbol.APPLE)
-s2 = Set(Symbol.DOG)
+s1 = SetElement(Symbol.APPLE, Symbol).as_composite_set()
+s2 = SetElement(Symbol.DOG, Symbol).as_composite_set()
 print(s1)
 print(~s1)
 print(s1 & s2)
@@ -149,7 +148,7 @@ Integer and Continuous variables need no specification of their domain.
 ```{code-cell} ipython3
 :tags: []
 
-a = Symbolic("a", Symbol)
+a = Symbolic("a", Set.from_iterable(Symbol))
 x = Continuous("x")
 y = Continuous("y")
 z = Integer("z")
@@ -166,7 +165,7 @@ Simple events are dictionary like objects that describe the values of the variab
 :tags: []
 
 e1 = SimpleEvent({a: Symbol.APPLE, x: closed(0, 1), y: closed(2, 3), z: closed(0, 10)}).as_composite_set()
-e2 = SimpleEvent({a: Set(Symbol.APPLE, Symbol.DOG), x: closed(0, 4), y: closed(0, 5), z: closed(0, 20)}).as_composite_set()
+e2 = SimpleEvent({a: (Symbol.APPLE, Symbol.DOG), x: closed(0, 4), y: closed(0, 5), z: closed(0, 20)}).as_composite_set()
 print(e1)
 print(e1 & e2)
 print(e1 | e2)

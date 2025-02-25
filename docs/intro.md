@@ -13,7 +13,7 @@ If you use this software, please cite it as below.
 author = {Schierenbeck, Tom},
 title = {Random-Events},
 url = {https://github.com/tomsch420/random-events},
-version = {3.0.6},
+version = {4.1.1},
 }
 ```
 
