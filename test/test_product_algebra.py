@@ -140,7 +140,6 @@ class EventTestCase(unittest.TestCase):
         e_a = event.marginal({a})
         self.assertEqual(e_a, SimpleEvent({self.a: ("a", "b")}).as_composite_set())
 
-    @unittest.skip("David fix this")
     def test_variable_comparison(self):
         a1 = Symbolic("a", str_set_domain)
         a2 = Symbolic("a", str_set_domain)

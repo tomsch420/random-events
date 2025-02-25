@@ -95,16 +95,6 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     def as_composite_set(self) -> Interval:
         return Interval(self)
 
-    def __lt__(self, other: Self):
-        # TODO: fix this when random_events_lib is fixed
-        if self.lower == other.lower:
-            return self.upper < other.upper
-        return self.lower < other.lower
-
-    def __eq__(self, other: Self):
-        # TODO: fix this when random_events_lib is fixed
-        return self.lower == other.lower and self.upper == other.upper and self.left == other.left and self.right == other.right
-
     def is_singleton(self) -> bool:
         """
         # TODO: fix this when random_events_lib is fixed
@@ -115,9 +105,6 @@ class SimpleInterval(sigma_algebra.AbstractSimpleSet):
     def contains(self, item: float) -> bool:
         return (self.lower < item < self.upper or (self.lower == item and self.left == Bound.CLOSED) or (
                 self.upper == item and self.right == Bound.CLOSED))
-
-    def __hash__(self):
-        return hash((self.lower, self.upper, self.left, self.right))
 
     def non_empty_to_string(self) -> str:
         left_bracket = '[' if self.left == Bound.CLOSED else '('

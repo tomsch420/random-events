@@ -10,7 +10,6 @@ from typing_extensions import List, TYPE_CHECKING, Union, Set as teSet
 
 from .sigma_algebra import *
 from .variable import *
-from .variable import Variable
 
 # Type definitions
 if TYPE_CHECKING:
@@ -109,16 +108,6 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
                 return False
         return True
 
-    def __hash__(self):
-        return hash(tuple(self.items()))
-
-    def __eq__(self, other):
-        # TODO fix this when the C++ implementation is fixed
-        for key, value in self.items():
-            if key not in other or value != other[key]:
-                return False
-        return True
-
     def __setitem__(self, key: VariableMapKey, value: Any):
         """
         Set the value of a variable in the event.
@@ -131,18 +120,6 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         key = self.get_variable(key)
         self._setitem_without_cpp(key, value)
         self._update_cpp_object()
-
-    def __lt__(self, other: Self):
-        # TODO fix this when the C++ implementation is fixed
-        if len(self.variables) < len(other.variables):
-            return True
-        for variable in self.variables:
-            if variable not in other:
-                return True
-            if self[variable] == other[variable]:
-                continue
-            else:
-                return self[variable] < other[variable]
 
     def marginal(self, variables: VariableSet) -> SimpleEvent:
         """

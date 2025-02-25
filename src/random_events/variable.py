@@ -35,16 +35,13 @@ class Variable(SubclassJSONSerializer, CPPWrapper):
         self.domain = domain
 
     def __lt__(self, other: Self) -> bool:
-        return self.name < other.name
-
-    def __gt__(self, other: Self) -> bool:
-        return self.name > other.name
+        return self._cpp_object < other._cpp_object
 
     def __hash__(self) -> int:
         return self.name.__hash__()
 
     def __eq__(self, other):
-        return self.name == other.name
+        return self._cpp_object == other._cpp_object
 
     def __str__(self):
         return f"{self.__class__.__name__}({self.name}, {self.domain})"
