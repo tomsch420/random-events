@@ -188,12 +188,10 @@ class EventTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             event[self.a] = 1
 
-    @unittest.skip("David fix this. i guess this has something to do with a shared pointer loosing its ref count.")
     def test_fill_missing_variables(self):
         e = SimpleEvent({self.x: closed(0, 1) | closed(3, 4)}).as_composite_set()
         y = Continuous("y")
         e.fill_missing_variables((y,))
-        print(e)
         self.assertTrue(y in e.variables)
 
     def test_fill_missing_variables_pure(self):

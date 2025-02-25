@@ -153,7 +153,7 @@ class Symbolic(Variable):
         return False
 
     def _from_cpp(self, cpp_object):
-        return self.__class__(cpp_object.name, self.domain._from_cpp(cpp_object.get_domain()))
+        return self.__class__(cpp_object.name, self.domain._from_cpp(cpp_object.domain))
 
     def make_value(self, value) -> Set:
         if not isinstance(value, Iterable):

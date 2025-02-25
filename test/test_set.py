@@ -111,6 +111,13 @@ class SetTypeTestCase(unittest.TestCase):
         inter = s.intersection_with(s2)
         self.assertEqual(inter, s2)
 
+    def test_call_temporary_result(self):
+        def make_set():
+            x = {"a" ,"b"}
+            return Set.from_iterable(x)
+
+        self.assertEqual(len(make_set().simple_sets), 2)
+
     def test_str(self):
         a = SetElement('a', str_set)
         b = SetElement('b', str_set)
