@@ -344,9 +344,8 @@ class Event(AbstractCompositeSet):
 
         all_variables = self.variables | set(variables)
         self.simple_set_example.fill_missing_variables(all_variables)
-
-        for simple_set in self.simple_sets:
-            simple_set.fill_missing_variables(all_variables)
+        self.simple_set_example._cpp_object.fill_missing_variables({variable._cpp_object for variable in all_variables})
+        self._cpp_object.fill_missing_variables({variable._cpp_object for variable in all_variables})
 
     def fill_missing_variables_pure(self, variables: Optional[Iterable[Variable]] = None):
         """
