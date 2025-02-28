@@ -12,3 +12,4 @@ ghp-import
 sphinx-proof
 sphinx-autoapi
 random-events
+graphviz
