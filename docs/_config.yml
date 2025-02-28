@@ -38,11 +38,14 @@ html:
 
 sphinx:
   extra_extensions:
-    - sphinx_proof
+    - 'sphinx_proof'
     - 'sphinx.ext.autodoc'
     - 'sphinx.ext.autosummary'
     - 'autoapi.extension'
     - 'sphinx.ext.coverage'
+    - 'sphinx.ext.graphviz'
+    - 'sphinx.ext.inheritance_diagram'
+
   config:
     suppress_warnings: ["mystnb.unknown_mime_type"]
     autosummary_generate: True
