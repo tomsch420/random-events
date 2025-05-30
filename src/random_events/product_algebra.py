@@ -157,6 +157,18 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         assignments = [AbstractCompositeSet.from_json(assignment) for assignment in data["assignments"]]
         return cls({variable: assignment for variable, assignment in zip(variables, assignments)})
 
+    def update_variables(self, new_variables: Dict[Variable, Variable]) -> Self:
+        """
+        Construct a new simple event where the own variables are replaced with the new variables.
+        If the new variables are missing mappings, the old variables are kept for the missing updates.
+
+        :param new_variables: A dictionary mapping current variables to new variables
+        :return: A new SimpleEvent with the updated variables
+        """
+        return SimpleEvent({
+            new_variables.get(variable, variable): value for variable, value in self.items()
+        })
+
     def plot(self) -> Union[List[go.Scatter], List[go.Mesh3d]]:
         """
         Plot the event.
@@ -226,7 +238,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         # for every atomic interval
         for simple_event in simple_events:
             # Create a 3D mesh trace for the rectangle
-            traces.append(go.Mesh3d(# 8 vertices of a cube
+            traces.append(go.Mesh3d(  # 8 vertices of a cube
                 x=[simple_event[x].lower, simple_event[x].lower, simple_event[x].upper, simple_event[x].upper,
                    simple_event[x].lower, simple_event[x].lower, simple_event[x].upper, simple_event[x].upper],
                 y=[simple_event[y].lower, simple_event[y].upper, simple_event[y].upper, simple_event[y].lower,
@@ -248,7 +260,7 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
             result = {"xaxis_title": self.variables[0].name, "yaxis_title": self.variables[1].name}
         elif len(self.variables) == 3:
             result = dict(scene=dict(xaxis_title=self.variables[0].name, yaxis_title=self.variables[1].name,
-                zaxis_title=self.variables[2].name))
+                                     zaxis_title=self.variables[2].name))
         else:
             raise NotImplementedError("Plotting is only supported for two and three dimensional events")
 
@@ -271,7 +283,6 @@ class SimpleEvent(AbstractSimpleSet, VariableMap):
         The variables are mapped to their domain.
         """
         return SimpleEvent({variable: self.get(variable, variable.domain) for variable in variables})
-
 
     def __deepcopy__(self):
         return self.__class__({variable: assignment.__deepcopy__() for variable, assignment in self.items()})
@@ -361,7 +372,6 @@ class Event(AbstractCompositeSet):
 
         return Event(*[simple_set.fill_missing_variables_pure(all_variables) for simple_set in self.simple_sets])
 
-
     def marginal(self, variables: VariableSet) -> Event:
         """
         Create the marginal event, that only contains the variables given.
@@ -387,6 +397,12 @@ class Event(AbstractCompositeSet):
                 else:
                     result[variable] = result[variable].__deepcopy__().union_with(simple_set[variable].__deepcopy__())
         return result
+
+    def update_variables(self, new_variables: Dict[Variable, Variable]) -> Event:
+        """
+        see :func:`~random_events.product_algebra.SimpleEvent.update_variables`
+        """
+        return Event(*[simple_event.update_variables(new_variables) for simple_event in self.simple_sets])
 
     def plot(self, color="#636EFA") -> Union[List[go.Scatter], List[go.Mesh3d]]:
         """

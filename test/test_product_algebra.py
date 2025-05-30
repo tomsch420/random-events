@@ -1,6 +1,7 @@
 import unittest
 
 import plotly.graph_objects as go
+from sortedcontainers import SortedSet
 
 from random_events.interval import *
 from random_events.product_algebra import SimpleEvent, Event
@@ -199,6 +200,13 @@ class EventTestCase(unittest.TestCase):
         y = Continuous("y")
         e = e.fill_missing_variables_pure((y,))
         self.assertTrue(y in e.variables)
+
+    def test_update_variables(self):
+        e = SimpleEvent({self.x: closed(0, 1), self.y: closed(3, 4)}).as_composite_set().complement()
+        y2 = Continuous("y2")
+        e2 = e.update_variables({self.y: y2})
+        self.assertEqual(e2.variables, SortedSet([self.x, y2]))
+
 
 
 class OperationsWithEmptySetsTestCase(unittest.TestCase):
