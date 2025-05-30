@@ -83,8 +83,14 @@ jobs:
         rm dist/*.whl
         mv wheelhouse/*.whl dist/
 
+    - name: Move artifacts for publishing
+      run: |
+        mkdir -p /github/home/dist
+        cp -r dist/* /github/home/dist/
+
     - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@v1.8.10
       with:
+        packages-dir: /github/home/dist
         skip-existing: false
 
