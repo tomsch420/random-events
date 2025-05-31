@@ -1,3 +1,5 @@
+import ast
+
 from pybind11.setup_helpers import Pybind11Extension
 from setuptools import setup
 
@@ -13,6 +15,30 @@ ext_modules = [
     ),
 ]
 
+
+def get_version():
+    with open("src/random_events/__init__.py") as f:
+        for line in f:
+            if line.startswith("__version__"):
+                return ast.parse(line).body[0].value.s
+
+
 setup(
+    name="random_events",
+    version=get_version(),
+    author="Tom Schierenbeck",
+    author_email="tom_sch@uni-bremen.de",
+    description="Random random events for probabilistic reasoning",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    url="https://github.com/tomsch420/random-events",
+    packages=["random_events"],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.8",
+    install_requires=open("requirements.txt").read().splitlines(),
     ext_modules=ext_modules,
 )
