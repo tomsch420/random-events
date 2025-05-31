@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "pybind11>=2.6.0", "setuptools-scm"]
+requires = ["setuptools>=42", "wheel", "pybind11>=2.6.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "random_events"
-dynamic = ["version"]
+version = {attr = "random_events.__version__"}
 description = "Random random events for probabilistic reasoning"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 license = {text = "MIT License"}
 authors = [
     {name = "Tom Schierenbeck", email = "tom_sch@uni-bremen.de"}
@@ -26,7 +26,6 @@ classifiers = [
 ]
 dependencies = [
     "setuptools",
-    "setuptools-scm",
     "pybind11"
 ]
 
@@ -41,9 +40,5 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools_scm]
-write_to = "src/random_events/_version.py"
-
 [tool.pybind11]
 include-dirs = ["src/random-events-lib/random_events_lib/include"]
-
