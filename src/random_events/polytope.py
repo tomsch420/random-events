@@ -190,7 +190,9 @@ class Polytope(polytope.Polytope):
 
         # solve the problem
         status = solver.Solve()
-        assert status == pywraplp.Solver.OPTIMAL, "The solver did not find an optimal solution."
+
+        if status != pywraplp.Solver.OPTIMAL:
+            raise RuntimeError("Solver did not find an optimal solution.")
 
         # calculate the inner box
         box = [[dimension.solution_value(), dimension.solution_value() + scale_of_dimension * scale.solution_value()]
