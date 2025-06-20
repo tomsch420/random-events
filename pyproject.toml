@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "pybind11>=2.6.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "random_events"
+dynamic=["version"]
+description = "Random random events for probabilistic reasoning"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT License"}
+authors = [
+    {name = "Tom Schierenbeck", email = "tom_sch@uni-bremen.de"}
+]
+keywords = [
+    "random events",
+    "probabilistic machine learning",
+    "probability theory",
+    "variables",
+    "reasoning under uncertainty"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "setuptools",
+    "pybind11"
+]
+
+[project.urls]
+Homepage = "https://github.com/tomsch420/random-events"
+Download = "https://github.com/tomsch420/random-events"
+"Bug Tracker" = "https://github.com/tomsch420/random-events/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pybind11]
+include-dirs = ["src/random-events-lib/random_events_lib/include"]
