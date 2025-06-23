@@ -10,6 +10,12 @@ from .interval import closed_open
 from .product_algebra import Event, SimpleEvent, Continuous
 
 
+class NoOptimalSolutionError(Exception):
+    """
+    Exception raised when the solver does not find an optimal solution.
+    """
+    pass
+
 class Polytope(polytope.Polytope):
     """
     Extension of the polytope class from the polytope library.
@@ -190,7 +196,9 @@ class Polytope(polytope.Polytope):
 
         # solve the problem
         status = solver.Solve()
-        assert status == pywraplp.Solver.OPTIMAL, "The solver did not find an optimal solution."
+
+        if status != pywraplp.Solver.OPTIMAL:
+            raise NoOptimalSolutionError(f"No optimal solution found for the bounding box {self}. ")
 
         # calculate the inner box
         box = [[dimension.solution_value(), dimension.solution_value() + scale_of_dimension * scale.solution_value()]
